@@ -1,6 +1,6 @@
 # FrameMotive — Phase A design package
 
-**Status:** proposed architecture for review, 27 October 2026. The initial architecture documents are committed and pushed to the GitHub `main` branch, and FrameMotive is registered in Firstmate. This repository contains design documents and no implementation.
+**Status:** M0 architecture decisions accepted 29 October 2026. The design documents are on GitHub `main`, and FrameMotive is registered in Firstmate. This repository contains design documents and no implementation.
 
 ## Purpose
 
@@ -15,9 +15,9 @@ Potential users include video editors, campaign production tools, motion-graphic
 3. [Decision records](decisions/)
 4. [Milestones and proposed issue breakdown](roadmap.md)
 
-## Immediate review gate
+## M0 decision status
 
-Confirm the bounded first operation, coordinate and numerical conventions, Rust packaging, and error semantics before implementing code. The first implementation milestone is specified in [the roadmap](roadmap.md#application-ready-foundation-m0). Later architecture remains provisional and must be tested against real use cases.
+ADR-001 through ADR-004 record the accepted M0 operation, coordinate and numeric contract, Rust packaging, outcomes, and editable-decision boundary. The first implementation milestone is specified in [the roadmap](roadmap.md#application-ready-foundation-m0). Implementation and later architecture remain separate work.
 
 ## Design provenance
 
@@ -25,7 +25,7 @@ This package is specified from generic geometry, publicly documented tool capabi
 
 ## Design status
 
-| Topic | Phase A proposal | To validate later |
+| Topic | Current design status | To validate later |
 | --- | --- | --- |
 | Core language | Rust library; no hybrid core initially | Packaging ergonomics and bindings demand |
 | First operation | One static full-bleed visual layer; required region visibility; maximal source crop at target aspect; preferred center | Actual client usefulness and expected fallback behavior |
@@ -34,4 +34,4 @@ This package is specified from generic geometry, publicly documented tool capabi
 | Output | Typed crop and affine placement decision plus diagnostics | JSON schema and editor adapters |
 | Later | Layer layout, safe zones, time, trajectories, interoperability | Specific algorithms, versions, benchmarks |
 
-This is a design proposal for discussion. There is no implementation claim or fabricated example output.
+M0 decisions are recorded in the ADRs; later milestones remain proposals. There is no implementation claim or fabricated example output.

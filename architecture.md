@@ -1,6 +1,6 @@
 # Preliminary architecture and domain model
 
-**Status:** Phase A design proposal. Only the M0 boundaries are intended for immediate approval. The future solver and adapter shapes are deliberately open.
+**Status:** M0 boundaries accepted in ADR-001 through ADR-004. Future solver and adapter shapes remain open.
 
 ## Boundary and data flow
 
@@ -20,11 +20,11 @@ The core accepts **descriptions**, not files or pixels. It returns **decisions**
 
 ## Minimal M0 domain
 
-| Concept | Proposed meaning and invariant | M0 role |
+| Concept | Meaning and invariant | M0 role |
 | --- | --- | --- |
 | `Canvas` | Width and height as `u32` pixels, each in `1..=65_536`; origin at top left. | Source and target extents. |
 | `Rect` | Finite `x, y, width, height` in continuous pixel-edge units; positive representable width/height; half-open `[x,x+w) × [y,y+h)`. | Source region and crop. |
-| `Region` | Nonempty, request-unique caller ID and source-space rectangle. | Required visible area. |
+| `Region` | Nonempty, request-unique caller ID and source-space rectangle above the ADR-002 resolution threshold. | Required visible area. |
 | `CropRequest` | Source canvas, target canvas, required regions, one finite nonnegative source-pixel margin, optional finite in-source focus point. | Single input operation; the source visual fills its canvas. |
 | `CropDecision` | Source crop, target bounds, uniform scale and translation, algorithm ID, constraint result IDs. | Portable geometric decision. |
 | `Diagnostic` | Stable code, severity, affected IDs, measured values, message. | Explains validation and feasibility. |
@@ -40,7 +40,7 @@ Temporal decisions need a declared trade-off between subject visibility and crop
 ### Coordinate contract
 
 - Pixel-edge coordinates use `(0,0)` at the top-left outer edge. A `1920 × 1080` source occupies `[0,1920) × [0,1080)`; its center is `(960,540)`.
-- `Rect` values may be fractional. The core does no implicit rounding. Export adapters own their editor's rounding and must revalidate required visibility after conversion. ADR-002 proposes the M0 canvas bound, exact input validation and source/target post-computation tolerance.
+- `Rect` values may be fractional. The core does no implicit rounding. Export adapters own their editor's rounding and must revalidate required visibility after conversion. ADR-002 defines the M0 canvas bound, exact input validation, minimum required-region extent, and source/target post-computation tolerance.
 - For M0 a crop `C = (cx, cy, cw, ch)` maps a source point to target by `p_target = s × (p_source − (cx,cy))`, with `s = target_width/cw`. The target bounds start at `(0,0)`. Reconstruct the target height as `s × ch` and compare it with `target_height` in target pixel units using ADR-002's tolerance.
 - In later layers, media-local → layer-local → source-composition → target-composition transforms must be explicit and ordered. A region carries its declared coordinate space; never silently reinterpret normalized coordinates as pixels. Normalized values, if accepted later, are converted at the boundary using the relevant canvas.
 - Time is absent in M0. Later work should use rational frame/time values rather than floating seconds for keyframe placement; a cut separates smoothing domains.
