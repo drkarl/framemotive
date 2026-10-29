@@ -1,6 +1,6 @@
 # Incremental roadmap and proposed issue plan
 
-**Status:** proposal for review. A local Git repository exists, but there is no remote, issue tracker, implementation, or release yet. The architecture and first milestone require owner approval before coding or publication. Later milestones are hypotheses to be refined by fixtures and integration experiments, not preauthorized work.
+**Status:** proposal for review. The GitHub repository has an `origin` remote, and its initial architecture commit is on `main`; no issues have been filed, and there is no implementation or release yet. The architecture and first milestone require owner approval before coding or publication. Later milestones are hypotheses to be refined by fixtures and integration experiments, not preauthorized work.
 
 ## Application-ready foundation (M0)
 
@@ -46,7 +46,7 @@ Milestones may split or reorder. For example, a minimal adapter spike can preced
 
 ## Proposed issue candidates, not yet filed
 
-Each proposed issue is deliberately bounded. References are local to this package until a repository and issue numbers exist.
+Each proposed issue is deliberately bounded. References are local to this package; no issues have been filed.
 
 | ID / dependency | Candidate issue and scope | Acceptance / test expectation |
 | --- | --- | --- |
