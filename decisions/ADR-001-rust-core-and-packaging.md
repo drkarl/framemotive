@@ -2,6 +2,7 @@
 
 - **Status:** proposed for owner review
 - **Date:** 2026-10-27
+- **Amended:** 2026-10-29
 
 ## Context
 
@@ -15,11 +16,11 @@ The project needs validated geometry, structured outcomes, portable distribution
 
 ## Proposed decision
 
-Use a Rust library crate as the primary implementation. The application-ready foundation should offer a library API and a runnable Rust example. Add a thin Rust CLI only when an explicit JSON input/output contract is reviewed; the CLI belongs to the early release roadmap, not the M0 acceptance gate. Optional Python bindings may be evaluated after a genuine Python integration need. Do not reject a mature C/C++ solver later merely for being native; assess FFI cost, licences, platform builds, and whether the solver solves a demonstrated class of problems.
+Use a Rust library crate as the primary implementation. M0 offers a typed library API and a runnable Rust example; it has no CLI or public JSON contract. Add a thin Rust CLI in M1 after the static request/result schema is reviewed under D-01. Optional Python bindings may be evaluated after a genuine Python integration need. Do not reject a mature C/C++ solver later merely for being native; assess FFI cost, licences, platform builds, and whether the solver solves a demonstrated class of problems.
 
 ## Consequences
 
-- M0 can be built with the Rust standard library and few or no runtime dependencies; this simplifies cross-platform CI and ownership review.
+- M0 can be built with the Rust standard library and few or no runtime dependencies; this simplifies cross-platform CI and dependency review.
 - Rich mathematical prototyping may be slower than Python; use independently generated public fixtures or a throwaway solver comparison, then keep the production core in Rust unless evidence changes the decision.
 - Backend integration should not be exposed through the stable public API before there is a proven need for multiple backends.
 - Library licensing is undecided; proprietary distribution remains possible. Dependency licences must permit the selected distribution mode.
