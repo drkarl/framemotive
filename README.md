@@ -1,6 +1,6 @@
 # FrameMotive — Phase A design package
 
-**Status:** proposed architecture for review, 27 October 2026. This local Git repository contains design documents and no implementation. No ownership, licence, or publication approval is implied.
+**Status:** proposed architecture for review, 27 October 2026. The initial architecture documents are committed and pushed to the GitHub `main` branch, and FrameMotive is registered in Firstmate. This repository contains design documents and no implementation. No ownership, licence, or publication approval is implied.
 
 ## Purpose
 
