@@ -16,7 +16,7 @@
 | ID | Requirement | Acceptance evidence |
 | --- | --- | --- |
 | F-01 | Accept source and target canvas dimensions of `1..=65_536` pixels per axis and a single static, full-bleed visual layer with a known source extent. | Valid synthetic landscape, portrait, and square cases construct and validate. |
-| F-02 | Represent finite axis-aligned regions of interest in source pixel-edge coordinates, each marked **required** for M0. | Reject NaN, infinities, nonpositive or unrepresentable extents, empty or duplicate IDs, and out-of-bounds required regions with typed diagnostics. |
+| F-02 | Represent finite axis-aligned regions of interest in source pixel-edge coordinates, each marked **required** for M0. | Reject NaN, infinities, nonpositive, unrepresentable or below-resolution extents, empty or duplicate IDs, and out-of-bounds required regions with typed diagnostics. ADR-002 defines the minimum supported region extent. |
 | F-03 | Compute the largest in-bounds source crop matching the target aspect ratio, subject to containing every required region and optional nonnegative margin. | Crop aspect and source bounds are checked independently; no required region is clipped beyond a documented tolerance. |
 | F-04 | When multiple feasible crop positions exist, choose the one whose center is nearest a finite, in-source preferred focus point; otherwise use the source center. | Same input and algorithm version yield the same decision and canonical ordering. |
 | F-05 | Return a structured, editable decision: source crop, target rectangle, uniform scale, translation, satisfied constraints, and diagnostics. | A test reconstructs the target transform from the crop and checks it covers the target canvas. No raster output is needed. |
@@ -47,7 +47,7 @@ Movable independent overlays, collision avoidance, safe-area placement, and sepa
 | ID | Requirement | M0 measure or later gate |
 | --- | --- | --- |
 | N-01 | Deterministic behavior | Stable diagnostic ordering, algorithm version and tie-break rules; repeated M0 typed decisions compare equal under the same build/target. Cross-architecture bitwise equality is not yet promised. |
-| N-02 | Numerical safety | Reject nonfinite values; positive representable extents; bounded conversions; test near-edge and small/large supported canvases. Use the source/target pixel tolerance proposed in ADR-002 for post-computation checks, never for input validity. |
+| N-02 | Numerical safety | Reject nonfinite values; positive representable extents and required regions below the ADR-002 resolution threshold; test near-edge and small/large supported canvases. Use ADR-002's source/target pixel tolerance for post-computation checks, never for input validity. |
 | N-03 | Explicit outcomes | M0 emits `solved`, `invalid_input`, or model-scoped `infeasible`; `unsupported` and `indeterminate` are reserved for later request/solver models. A timeout is not an infeasibility proof. |
 | N-04 | Performance | M0 geometry should be O(number of required regions); measure a 1,000-region synthetic case and record machine/build before declaring a latency target. Later solver budgets are per problem class. |
 | N-05 | Portability | Stable Rust; Linux, macOS, Windows CI planned before release. No native optimizer dependency in M0. |

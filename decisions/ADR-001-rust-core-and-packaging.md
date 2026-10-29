@@ -1,8 +1,9 @@
 # ADR-001: Rust core, with a small Rust CLI later
 
-- **Status:** proposed for owner review
+- **Status:** accepted
 - **Date:** 2026-10-27
 - **Amended:** 2026-10-29
+- **Accepted:** 2026-10-29
 
 ## Context
 
@@ -14,7 +15,7 @@ The project needs validated geometry, structured outcomes, portable distribution
 2. **Python core.** Faster experiments and access to [SciPy optimization](https://docs.scipy.org/doc/scipy/reference/optimize.html), [OR-Tools Python](https://developers.google.com/optimization/cp/cp_solver), and [OTIO Python](https://opentimelineio.readthedocs.io/en/latest/). More runtime/package variability for embedding as a core library and contrary to the owner preference.
 3. **Rust/Python hybrid from day one.** Adds binding, ABI, wheel, CI, and versioning complexity before any Python consumer exists.
 
-## Proposed decision
+## Decision
 
 Use a Rust library crate as the primary implementation. M0 offers a typed library API and a runnable Rust example; it has no CLI or public JSON contract. Add a thin Rust CLI in M1 after the static request/result schema is reviewed under D-01. Optional Python bindings may be evaluated after a genuine Python integration need. Do not reject a mature C/C++ solver later merely for being native; assess FFI cost, licences, platform builds, and whether the solver solves a demonstrated class of problems.
 

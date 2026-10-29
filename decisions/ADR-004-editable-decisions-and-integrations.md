@@ -1,8 +1,9 @@
 # ADR-004: Tool-neutral geometric decisions, not a new timeline
 
-- **Status:** proposed for owner review
+- **Status:** accepted
 - **Date:** 2026-10-27
 - **Amended:** 2026-10-29
+- **Accepted:** 2026-10-29
 
 ## Context
 
@@ -15,7 +16,7 @@ Users need results they can adjust later. A rendered output cannot express how a
 3. Define a complete new multimedia interchange standard: much larger scope and overlaps mature timeline work.
 4. Emit narrow, versioned geometric edit decisions and translate them through adapters.
 
-## Proposed decision
+## Decision
 
 The core result is a typed geometric decision with explicit source/target spaces and diagnostics. M0 requires no serialized public standard, editor project writer, or renderer. Once a consumer exists, define a small versioned interchange document for supported operations and retain an explicit `unsupported/approximated` report for adapters. An adapter is responsible for applying and re-reading operations in its target editor; the core remains unaware of that editor. Reuse OTIO where editorial context is needed and existing media engines for decoding, rendering, and encoding.
 

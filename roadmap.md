@@ -1,6 +1,6 @@
 # Incremental roadmap and proposed issue plan
 
-**Status:** proposal for review. Project repository and registration status are recorded in the [README](README.md). Roadmap work is tracked in [GitHub issues #2–#18](https://github.com/drkarl/framemotive/issues); no release has been made. The architecture and first milestone require owner approval before coding or publication. Later milestones are hypotheses to be refined by fixtures and integration experiments, not preauthorized work.
+**Status:** M0 architecture decisions are accepted in ADR-001 through ADR-004. Project repository and registration status are recorded in the [README](README.md). Roadmap work is tracked in [GitHub issues #2–#18](https://github.com/drkarl/framemotive/issues); no release has been made. Implementation is tracked separately. Later milestones are hypotheses to be refined by fixtures and integration experiments.
 
 ## Application-ready foundation (M0)
 
@@ -27,7 +27,7 @@ This is a proposed structure, not a command to create files now. Split modules o
 1. Source `1920×1080`, target `1080×1920`, required ROI `[1200, 1400]×[300, 800]`: center crop hides part of the ROI; the library shifts the approximately `607.5×1080` source crop to include it and reports `Solved`.
 2. Same canvases, ROI spanning source x coordinates `200..1600`: the required width exceeds any full-bleed portrait crop; result is `Infeasible` with actual versus available width.
 3. ROI near an edge plus a valid margin extending outside the source: `Infeasible` for the supported in-bounds crop model, never a clipped success. A negative or nonfinite margin is `InvalidInput`.
-4. Nonfinite coordinates, zero canvas dimension, duplicate region IDs and out-of-bounds region: typed `InvalidInput` diagnostics.
+4. Nonfinite coordinates, zero canvas dimension, duplicate region IDs, below-resolution or out-of-bounds region: typed `InvalidInput` diagnostics.
 5. Empty ROI list with a preferred point: deterministic preferred-center crop; repeated runs on a pinned build yield identical geometry.
 
 **M0 completion bar:** Tests compare source containment, aspect, all required ROI containment, affine mapping, status and diagnostic codes using independent assertions. README clearly says one static layer only. A normal `cargo test` and example run pass on supported platforms. No rendering or editor integration is claimed.
@@ -51,7 +51,7 @@ Each issue is deliberately bounded. Dependencies refer to the IDs below; linked 
 
 | ID / dependency | Candidate issue and scope | Acceptance / test expectation |
 | --- | --- | --- |
-| [A-01](https://github.com/drkarl/framemotive/issues/2) / none | Approve ADR-001–004 and numeric tolerance, margin and API naming. No code. | Owner records decisions and unresolved points; future changes use ADR updates. |
+| [A-01](https://github.com/drkarl/framemotive/issues/2) / none | Record the accepted M0 contract in ADR-001–004, including numeric tolerance, margin and API naming. No code. | M0 decisions are explicit; future choices remain assigned to later issues. |
 | [F-01](https://github.com/drkarl/framemotive/issues/3) / A-01 | Add a Cargo library skeleton and update the existing README to reflect implemented capabilities. | Source tree and docs independently understandable; no empty feature claims. |
 | [F-02](https://github.com/drkarl/framemotive/issues/4) / F-01 | Add validated `Canvas`, `Rect`, `Region` and typed diagnostics. | Tests for finite/positive/bounds/ID validation and boundary convention. |
 | [F-03](https://github.com/drkarl/framemotive/issues/5) / F-02 | Implement maximal static crop interval algorithm and structured decision. | Synthetic off-center, impossible-wide, square, and empty-ROI fixtures; independent invariant checker. |
@@ -69,17 +69,16 @@ Each issue is deliberately bounded. Dependencies refer to the IDs below; linked 
 | [Q-01](https://github.com/drkarl/framemotive/issues/17) / F-04 | Add property/fuzz and benchmark harness for geometry. | Invariants hold across generated finite inputs; baseline environment and timing recorded. |
 | [Q-02](https://github.com/drkarl/framemotive/issues/18) / Q-01 | Define platform CI, packaging and release criteria. | Platform checks, dependency review, performance budgets and compatibility policy are documented. |
 
-**Implementation-ready after architecture approval:** F-01 through F-04. **Needs design or an experiment:** E-01 onward, N-01 onward, D-01, T-00 onward, and Q-01 onward. The later roadmap remains provisional and requires its own decisions and evidence before implementation.
+**Next implementable candidates:** F-01 through F-04, each as a separate task. **Needs design or an experiment:** E-01 onward, N-01 onward, D-01, T-00 onward, and Q-01 onward. The later roadmap remains provisional and requires its own decisions and evidence before implementation.
 
-## Decisions requested at the Phase A review
+## Accepted M0 decisions
 
-These are proposed choices for owner review, not approved decisions.
+1. Rust is the primary core. M0 uses a typed library and example with no optimizer or CLI; the versioned CLI follows in M1.
+2. M0 handles one full-bleed visual, maximal source crop, required ROIs, optional uniform margin and preferred focus. Padding and multi-layer placement remain outside M0.
+3. Canvas dimensions are `1..=65_536` per axis. ADR-002 defines post-computation tolerance and a minimum required-region extent. A valid margin outside source bounds is model-scoped `Infeasible`.
+4. The M0 public types and three outcomes are recorded in ADR-003; `Unsupported` and `Indeterminate` remain future outcome names.
 
-1. Approve Rust as the primary core, no optimizer in M0, and a typed library plus example in M0 with the versioned CLI deferred to M1.
-2. Approve the M0 operation class: one full-bleed visual, maximal source crop, required ROIs, optional margin and preferred focus; no padding or multi-layer placement yet.
-3. Approve the proposed `1..=65_536` canvas range and ADR-002 post-computation tolerance, and classify a valid margin outside source bounds as model-scoped `Infeasible`.
-4. Confirm the M0 public type and outcome vocabulary; `Unsupported` and `Indeterminate` remain reserved for future models.
-5. Select an editor and its supported automation surface for the early save/reopen spike; decide whether the result changes M2 priorities.
+The target editor and supported automation surface for the early save/reopen spike are chosen in E-01. Multi-layer solver selection and temporal input remain later decisions.
 
 ## Source index
 
