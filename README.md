@@ -1,6 +1,6 @@
 # FrameMotive — Phase A design package
 
-**Status:** proposed architecture for review, 27 October 2026. The initial architecture documents are committed and pushed to the GitHub `main` branch, and FrameMotive is registered in Firstmate. This repository contains design documents and no implementation. No ownership, licence, or publication approval is implied.
+**Status:** proposed architecture for review, 27 October 2026. The initial architecture documents are committed and pushed to the GitHub `main` branch, and FrameMotive is registered in Firstmate. This repository contains design documents and no implementation.
 
 ## Purpose
 
@@ -19,11 +19,9 @@ Potential users include video editors, campaign production tools, motion-graphic
 
 Confirm the bounded first operation, coordinate and numerical conventions, Rust packaging, and error semantics before implementing code. The first implementation milestone is specified in [the roadmap](roadmap.md#application-ready-foundation-m0). Later architecture remains provisional and must be tested against real use cases.
 
-## Independence and ownership
+## Design provenance
 
-This package is specified from generic geometry, publicly documented tool capabilities, and synthetic examples. It contains no private product schemas, source code, application architecture, internal algorithms, customer data, or company-specific workflow. A future project can be useful without integration with any particular editor.
-
-Technical independence does **not** establish personal legal ownership. Before making a personal repository accessible externally or sharing its contents with a third party, review applicable employment, startup, invention-assignment, contributor, and platform terms. A private repository and private licence do not by themselves control copies retained by external services. Publication and external sharing require a separate decision.
+This package is specified from generic geometry, publicly documented tool capabilities, and synthetic examples. It does not depend on any particular editor's project format.
 
 ## Design status
 

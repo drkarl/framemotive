@@ -22,20 +22,26 @@ The core accepts **descriptions**, not files or pixels. It returns **decisions**
 
 | Concept | Proposed meaning and invariant | M0 role |
 | --- | --- | --- |
-| `Canvas` | Width and height in positive integer pixels; origin at top left. | Source and target extents. |
-| `Rect` | Finite `x, y, width, height` in continuous pixel-edge units; positive width/height; half-open `[x,x+w) × [y,y+h)`. | Source region and crop. |
-| `Region` | Stable caller ID and source-space rectangle. | Required visible area. |
-| `CropRequest` | Source canvas, target canvas, required regions, nonnegative margin, optional preferred source-space focus point. | Single input operation; the source visual fills its canvas. |
+| `Canvas` | Width and height as `u32` pixels, each in `1..=65_536`; origin at top left. | Source and target extents. |
+| `Rect` | Finite `x, y, width, height` in continuous pixel-edge units; positive representable width/height; half-open `[x,x+w) × [y,y+h)`. | Source region and crop. |
+| `Region` | Nonempty, request-unique caller ID and source-space rectangle. | Required visible area. |
+| `CropRequest` | Source canvas, target canvas, required regions, one finite nonnegative source-pixel margin, optional finite in-source focus point. | Single input operation; the source visual fills its canvas. |
 | `CropDecision` | Source crop, target bounds, uniform scale and translation, algorithm ID, constraint result IDs. | Portable geometric decision. |
 | `Diagnostic` | Stable code, severity, affected IDs, measured values, message. | Explains validation and feasibility. |
 
 Stable IDs are scoped to one request, not globally meaningful. `Region` is semantic only because the caller says it matters; the library neither classifies nor detects the pixels inside it. M0 has one full-bleed source visual layer. A composition and independently movable layers belong in the next domain increment, where use cases can determine whether `Layer`, `MediaRegion`, and `Transform` need separate types.
 
+### Future subject-track input contract
+
+Moving subjects will arrive as caller-supplied metadata, not detections performed by the core. Before M3 implementation, define a track as a stable ID with a declared source coordinate space and timebase, time-stamped bounds or points, and explicit cut boundaries. The contract must state how observation gaps, off-screen intervals, confidence, and caller-supplied importance affect hard visibility and soft framing. It must also distinguish observed samples from interpolated or predicted positions; no solver may assume an unobserved span is continuously visible. Validate monotonic sample times, duplicate times, bounds, and timebase compatibility at ingestion. The exact serialization and interpolation policy remain open until moving-subject fixtures exist.
+
+Temporal decisions need a declared trade-off between subject visibility and crop motion. Measure speed and acceleration on the rational media clock, reset continuity penalties at cuts, and validate visibility between keyframes using an explicit track interpolation or conservative bound. If the input cannot justify such a bound, report the affected span as unverified rather than claiming continuous visibility.
+
 ### Coordinate contract
 
 - Pixel-edge coordinates use `(0,0)` at the top-left outer edge. A `1920 × 1080` source occupies `[0,1920) × [0,1080)`; its center is `(960,540)`.
-- `Rect` values may be fractional. The core does no implicit rounding. Export adapters own their editor's rounding and must revalidate required visibility after conversion.
-- For M0 a crop `C = (cx, cy, cw, ch)` maps a source point to target by `p_target = s × (p_source − (cx,cy))`, with `s = target_width/cw = target_height/ch`. The target bounds start at `(0,0)`. These two calculated scales must agree within the documented numeric tolerance.
+- `Rect` values may be fractional. The core does no implicit rounding. Export adapters own their editor's rounding and must revalidate required visibility after conversion. ADR-002 proposes the M0 canvas bound, exact input validation and source/target post-computation tolerance.
+- For M0 a crop `C = (cx, cy, cw, ch)` maps a source point to target by `p_target = s × (p_source − (cx,cy))`, with `s = target_width/cw`. The target bounds start at `(0,0)`. Reconstruct the target height as `s × ch` and compare it with `target_height` in target pixel units using ADR-002's tolerance.
 - In later layers, media-local → layer-local → source-composition → target-composition transforms must be explicit and ordered. A region carries its declared coordinate space; never silently reinterpret normalized coordinates as pixels. Normalized values, if accepted later, are converted at the boundary using the relevant canvas.
 - Time is absent in M0. Later work should use rational frame/time values rather than floating seconds for keyframe placement; a cut separates smoothing domains.
 
@@ -46,7 +52,7 @@ For source size `W × H` and target aspect `r = target_width / target_height`, c
 - If `W/H >= r`, set `crop_height = H` and `crop_width = rH`.
 - Otherwise set `crop_width = W` and `crop_height = W/r`.
 
-Expand each required region by the specified margin in source units. An expanded region leaving the source bounds is infeasible. Let `U` be the bounding union of these expanded regions. A feasible crop origin must satisfy both source containment and region containment:
+Expand each required region by the finite nonnegative margin in source pixels. A valid margin that expands a region beyond the source bounds is `Infeasible` for this in-bounds crop model; a negative or nonfinite margin is `InvalidInput`. Let `U` be the bounding union of the expanded regions. A feasible crop origin must satisfy both source containment and region containment:
 
 ```
 x ∈ [0, W − crop_width] ∩ [U.right − crop_width, U.left]
@@ -66,8 +72,8 @@ Use a tagged outcome, not a nullable decision plus warnings:
 | `Solved` | All declared M0 hard requirements were independently rechecked against the returned geometry. |
 | `InvalidInput` | Malformed, nonfinite, out-of-bounds, or contradictory input; point to fields and IDs. |
 | `Infeasible` | Valid request, no solution within the explicitly supported operation model. |
-| `Unsupported` | A valid request contains a feature outside this version's supported model. |
-| `Indeterminate` | Reserved for later bounded solver execution when feasibility was not decided. It is never synonymous with infeasible. |
+| `Unsupported` | Reserved for a later request model that can express valid but unsupported features; well-typed M0 crop requests do not produce it. |
+| `Indeterminate` | Reserved for later bounded solver execution when feasibility was not decided; M0's analytic operation does not produce it. It is never synonymous with infeasible. |
 
 Diagnostics should carry a stable machine code and numeric evidence (e.g. required union width and available crop width), while human-readable text is free to improve. The API should report the declared model and algorithm version. Do not expose an optimization `score` in M0 when there is no comparable optimization across solution classes. A later solver may report objective components, bound, optimality gap, run budget, and nonoptimal feasible status.
 
@@ -83,9 +89,13 @@ Diagnostics should carry a stable machine code and numeric evidence (e.g. requir
 
 Later architecture can combine a static feasibility stage, optimization stage, and independent validator. Hard constraints must be checked after rounding and after adapter translation. Soft priorities need an explicit objective and ranking policy; weighted sums alone can let a weak preference outweigh an intended stronger category if scales are wrong. A bounded solver may return one best known solution plus diagnostics initially; multiple ranked solutions should wait for users who need them.
 
+For later layered models, infeasibility diagnostics should identify the supported model, affected constraint and layer IDs, and relevant measured bounds or violation magnitudes. A minimal conflicting set is useful when available but is not required for a truthful result. A timeout or failed search must remain `Indeterminate`.
+
+M1 should extend only the single static source-layer crop model: hard visibility, soft framing preferences, measured violations, and stable result semantics. M2 begins when independently movable layers, target safe areas, collision avoidance, and separation constraints are admitted; it extends hard/soft semantics to placement. This boundary keeps M1's analytic feasibility claim narrow and makes the need for a general solver testable with actual layered fixtures.
+
 ### Rust-native dependency assessment
 
-The preferred stack is a Rust core and Rust CLI. Python bindings are a possible later distribution channel, not a reason to move the core to Python. Each dependency below is a **candidate**, not yet selected. Recheck the exact release licence and transitive dependencies before adoption.
+The preferred stack is a Rust core with a small CLI in M1. Python bindings are a possible later distribution channel, not a reason to move the core to Python. Each dependency below is a **candidate**, not yet selected. Recheck the exact release licence and transitive dependencies before adoption.
 
 | Candidate | Capability and fit | Correctness, deployment, and licence caution |
 | --- | --- | --- |
@@ -107,6 +117,8 @@ The eventual decision format should describe operations on geometry and time: cr
 
 Potential first adapters are a public editor's documented command API, a native project SDK, or an OTIO sidecar plus editor-specific application. [FilmCraft documents a headless engine and JSON command channel](https://github.com/storytold/filmcraft/blob/main/docs/architecture.md) and [versioned native project files](https://github.com/storytold/filmcraft/blob/main/docs/project-files.md), but an actual end-to-end editable round trip is still an integration experiment. [Blender background Python](https://docs.blender.org/manual/en/latest/advanced/command_line/arguments.html) is another possible future adapter. Rendering and encoding should continue through established tools.
 
+Run a minimal save/reopen spike as soon as M0 emits a stable crop decision, before committing to M2's layered design. Apply one crop through a documented editor surface, save and reopen the project, inspect the persisted editable operation, modify it in the editor, and compare the resulting geometry with the source decision. Record unsupported or approximated fields separately from rendered pixel differences. This tests the central editability claim early; a complete interchange format and production adapter can still wait until M4.
+
 ## Competitive boundary
 
 | Existing tool | What it already does | Remaining case for this project |
@@ -123,6 +135,5 @@ The distinction is testable, not assumed: if an existing editor or library can a
 
 1. **Model usefulness:** test a synthetic landscape shot with central focus and edge ROI against center-crop. The ROI must survive or receive an explicit infeasibility report. A crop that simply mirrors center-crop adds little value.
 2. **Geometry semantics:** test rectangular containment at exact boundaries, fractional crop sizes, extreme aspect ratios, and all nonfinite inputs. Use an independent validator in tests.
-3. **Different editor coordinates:** translate a known crop to one editor, save/reopen its project, compare the resulting geometry and render. Do this only after M0 approval and adapter investigation.
+3. **Different editor coordinates:** perform the early save/reopen/modify spike above once the M0 crop decision is stable; compare persisted geometry and rendered output separately.
 4. **Solver fit:** prepare synthetic two-layer and three-layer collision cases, then prototype linear/Cassowary and MILP/CP approaches separately. Measure solve time, feasibility status, deterministic tie behavior, and packaging before choosing one.
-5. **Ownership and disclosure:** technical separation is designed here; contractual ownership and coding-platform eligibility remain external gates before any publication or paid coding session.
