@@ -1,6 +1,6 @@
 # Incremental roadmap and proposed issue plan
 
-**Status:** proposal for review. The GitHub repository has an `origin` remote, and its initial architecture commit is on `main`; no issues have been filed, and there is no implementation or release yet. The architecture and first milestone require owner approval before coding or publication. Later milestones are hypotheses to be refined by fixtures and integration experiments, not preauthorized work.
+**Status:** proposal for review. Project repository and registration status are recorded in the [README](README.md). No proposed issues have been filed, and no release has been made. The architecture and first milestone require owner approval before coding or publication. Later milestones are hypotheses to be refined by fixtures and integration experiments, not preauthorized work.
 
 ## Application-ready foundation (M0)
 
