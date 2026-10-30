@@ -1,0 +1,3 @@
+* text=auto eol=lf
+# Golden fixture dirs would be marked binary-exact later, e.g.:
+# tests/fixtures/** -text

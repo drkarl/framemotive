@@ -1,5 +1,6 @@
 name: advisories
 
+# Note: GitHub disables scheduled workflows after 60 days of repo inactivity.
 on:
   schedule:
     - cron: '0 6 * * 1' # Mondays 06:00 UTC
