@@ -1,6 +1,6 @@
 # FrameMotive — Phase A design package
 
-**Status:** M0 architecture decisions accepted 29 October 2026. The design documents are on GitHub `main`, and FrameMotive is registered in Firstmate. This repository contains design documents and no implementation.
+**Status:** M0 architecture decisions accepted 29 October 2026. The design documents are on GitHub `main`. This repository contains design documents and no implementation.
 
 ## Purpose
 
@@ -17,7 +17,7 @@ Potential users include video editors, campaign production tools, motion-graphic
 
 ## M0 decision status
 
-ADR-001 through ADR-004 record the accepted M0 operation, coordinate and numeric contract, Rust packaging, outcomes, and editable-decision boundary. The first implementation milestone is specified in [the roadmap](roadmap.md#application-ready-foundation-m0). Implementation and later architecture remain separate work.
+ADR-001 through ADR-004 record the accepted M0 operation, coordinate and numeric contract, Rust packaging, outcomes, and editable-decision boundary. The first implementation milestone is specified in [the roadmap](roadmap.md#application-ready-foundation-m0).
 
 ## Design provenance
 
@@ -28,10 +28,10 @@ This package is specified from generic geometry, publicly documented tool capabi
 | Topic | Current design status | To validate later |
 | --- | --- | --- |
 | Core language | Rust library; no hybrid core initially | Packaging ergonomics and bindings demand |
-| First operation | One static full-bleed visual layer; required region visibility; maximal source crop at target aspect; preferred center | Actual client usefulness and expected fallback behavior |
+| First operation | One static full-bleed visual layer; required region visibility; maximal source crop at target aspect; preferred focus (default: center of required regions) | Actual client usefulness and expected fallback behavior |
 | Coordinates | Continuous pixel-edge geometry, top-left origin, half-open rectangles | Fractional-pixel precision across editors |
 | Solver | Analytic geometry for M0; no general solver dependency | Static multi-layer constraint experiments |
 | Output | Typed crop and affine placement decision plus diagnostics | JSON schema and editor adapters |
 | Later | Layer layout, safe zones, time, trajectories, interoperability | Specific algorithms, versions, benchmarks |
 
-M0 decisions are recorded in the ADRs; later milestones remain proposals. There is no implementation claim or fabricated example output.
+Later milestones remain proposals. There is no fabricated example output.

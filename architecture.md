@@ -24,8 +24,8 @@ The core accepts **descriptions**, not files or pixels. It returns **decisions**
 | --- | --- | --- |
 | `Canvas` | Width and height as `u32` pixels, each in `1..=65_536`; origin at top left. | Source and target extents. |
 | `Rect` | Finite `x, y, width, height` in continuous pixel-edge units; positive representable width/height; half-open `[x,x+w) × [y,y+h)`. | Source region and crop. |
-| `Region` | Nonempty, request-unique caller ID and source-space rectangle above the ADR-002 resolution threshold. | Required visible area. |
-| `CropRequest` | Source canvas, target canvas, required regions, one finite nonnegative source-pixel margin, optional finite in-source focus point. | Single input operation; the source visual fills its canvas. |
+| `Region` | Nonempty, request-unique caller ID and source-space rectangle. Input policy: partly outside the source is clipped to the visible portion with a `region_clipped` diagnostic carrying the original bounds; wholly outside is `InvalidInput`; a clipped region below the ADR-002 resolution threshold is `InvalidInput`. | Required visible area. |
+| `CropRequest` | Source canvas, target canvas, required regions, one finite nonnegative source-pixel margin (soft by default; optional `hard` mode), optional finite in-source focus point, optional finite `max_upscale > 0`, optional target-space safe rectangle T (finite, inside the target canvas, positive extent; else `InvalidInput`). | Single input operation; the source visual fills its canvas. |
 | `CropDecision` | Source crop, target bounds, uniform scale and translation, algorithm ID, constraint result IDs. | Portable geometric decision. |
 | `Diagnostic` | Stable code, severity, affected IDs, measured values, message. | Explains validation and feasibility. |
 
@@ -39,6 +39,7 @@ Temporal decisions need a declared trade-off between subject visibility and crop
 
 ### Coordinate contract
 
+- Source and region geometry are in display-oriented, square-pixel space: the caller has applied sample aspect ratio and rotation metadata, and dimensions are display dimensions, not coded dimensions.
 - Pixel-edge coordinates use `(0,0)` at the top-left outer edge. A `1920 × 1080` source occupies `[0,1920) × [0,1080)`; its center is `(960,540)`.
 - `Rect` values may be fractional. The core does no implicit rounding. Export adapters own their editor's rounding and must revalidate required visibility after conversion. ADR-002 defines the M0 canvas bound, exact input validation, minimum required-region extent, and source/target post-computation tolerance.
 - For M0 a crop `C = (cx, cy, cw, ch)` maps a source point to target by `p_target = s × (p_source − (cx,cy))`, with `s = target_width/cw`. The target bounds start at `(0,0)`. Reconstruct the target height as `s × ch` and compare it with `target_height` in target pixel units using ADR-002's tolerance.
@@ -52,16 +53,26 @@ For source size `W × H` and target aspect `r = target_width / target_height`, c
 - If `W/H >= r`, set `crop_height = H` and `crop_width = rH`.
 - Otherwise set `crop_width = W` and `crop_height = W/r`.
 
-Expand each required region by the finite nonnegative margin in source pixels. A valid margin that expands a region beyond the source bounds is `Infeasible` for this in-bounds crop model; a negative or nonfinite margin is `InvalidInput`. Let `U` be the bounding union of the expanded regions. A feasible crop origin must satisfy both source containment and region containment:
+Clip each required region to the source bounds (`region_clipped` diagnostic with original bounds when it changes); a wholly outside region, or one clipped below the minimum extent, is `InvalidInput`. Let `U` be the bounding union of the clipped, unexpanded regions. Report `s = target_width / crop_width`; since the crop is maximal, `s` is the minimum achievable scale, so `s > max_upscale` (if set) is `Infeasible` with measured scale and limit. A negative or nonfinite margin `m` is `InvalidInput`.
+
+Select the origin per axis lexicographically (x shown; y uses top/bottom and heights):
 
 ```
-x ∈ [0, W − crop_width] ∩ [U.right − crop_width, U.left]
-y ∈ [0, H − crop_height] ∩ [U.bottom − crop_height, U.top]
+(a) hard interval  Hx = [0, W − cw] ∩ [U.right − cw, U.left]
+                        ∩ [U.right − T.right/s, U.left − T.left/s]     (last term only with safe rectangle T)
+(b) soft margin: dL = U.left, dR = W − U.right (distances to source edges). For m' ∈ [0, m]:
+      lo(m') = max(a, U.right + min(m', dR) − cw)
+      hi(m') = min(b, U.left − min(m', dL))
+      M(m')  = [lo(m'), hi(m')]
+    m* = largest m' ∈ [0, m] with lo(m') ≤ hi(m'); select within M(m*)
+(c) x = clamp(focus_x − cw/2, M(m*))
 ```
 
-If either interval is empty, no crop at the target aspect and maximal size can preserve the required regions. Select the feasible origin nearest `preferred_focus − crop_size/2`; use source center when no preference is supplied. Clamp each axis independently; ties follow a documented lower-coordinate rule. Return the crop and the affine mapping above. Empty required-region sets remain useful: this becomes a deterministic preferred-center crop.
+`m*` exists because `M(0) = Hx`, nonempty whenever the request is not `Infeasible`. `lo` is nondecreasing and `hi` nonincreasing in `m'`, both piecewise linear with breakpoints at `dL` and `dR`, so `m*` has a closed form: evaluate at the breakpoints, then solve the linear segment. Priority is explicit: hard constraints, then maximize achieved margin (equal on both sides up to source-edge caps), then focus. Focus never reduces achieved margin.
 
-**Critical limitation:** this proves feasibility only for the M0 operation class: a maximal, full-bleed, axis-aligned source crop with no padding. It does not prove that no other creative solution exists. A failure must say `infeasible_for_supported_crop_model` or equivalent, and suggest neither hidden solver capability nor global impossibility. The result should identify the union extent and crop extent that conflicted. It need not claim a minimal unsatisfiable core.
+Focus is the preferred focus if supplied; otherwise the center of `U` if any regions exist; otherwise the source center. Interval clamping yields a unique origin, so no tie rule is needed. An empty `Hx` or `Hy` means no crop at the target aspect and maximal size can preserve the required regions (or, with T, map them inside the safe rectangle); the diagnostic names the safe rectangle when T bounds cause the emptiness. Margin is soft by default: the largest achievable margin `m*` is used, even when `m* < m`, and the result is still `Solved`. In `hard` margin mode, `m* < m` (including a margin extending past a source edge) is `Infeasible` (report region ID, margin, edge). Compare the margin with edge distances before expansion so a very large finite margin cannot overflow intermediate geometry. Always report, per region and per edge, the achieved margin (distance from region edge to crop edge) and any shortfall versus the requested `m` (not `m*`); shortfall arises from source edges or crop size. Return the crop and the affine mapping above. With no required regions, `U` is undefined and the region-containment, safe-rectangle and margin terms are vacuous: `Hx = [0, W − cw]` (source bounds only; the `max_upscale` check still applies), margin achieved/shortfall reporting is empty, and focus defaults to the source center (or the preferred focus), giving a deterministic source-center or preferred-focus crop.
+
+**Critical limitation:** this proves feasibility only for the M0 operation class: a maximal, full-bleed, axis-aligned source crop with no padding. It does not prove that no other creative solution exists. A failure must say `infeasible_for_supported_crop_model` or equivalent, and suggest neither hidden solver capability nor global impossibility. The result should identify the union extent and crop extent that conflicted. It need not claim a minimal unsatisfiable core. Every `Infeasible` result also carries a diagnostic reporting the whole-source fit geometry as an **unvalidated alternative**, with bar sizes in target pixels: `s_fit = min(tw/W, th/H)`, centered, horizontal bars total `tw − s_fit·W`, vertical bars total `th − s_fit·H`, split equally. The diagnostic includes the fit's check against each M0 hard constraint: `max_upscale` (violated if `s_fit > max_upscale`) and safe rectangle T (every required region mapped by the fit transform must lie inside T). It says "fit/pad satisfies the hard constraints" only when every check passes; otherwise it lists the violated constraint(s). It is never a returned decision; `Infeasible` keeps its meaning. Fully specified pad decisions belong to a later operation model.
 
 ## Result semantics
 
@@ -91,7 +102,7 @@ Later architecture can combine a static feasibility stage, optimization stage, a
 
 For later layered models, infeasibility diagnostics should identify the supported model, affected constraint and layer IDs, and relevant measured bounds or violation magnitudes. A minimal conflicting set is useful when available but is not required for a truthful result. A timeout or failed search must remain `Indeterminate`.
 
-M1 should extend only the single static source-layer crop model: hard visibility, soft framing preferences, measured violations, and stable result semantics. M2 begins when independently movable layers, target safe areas, collision avoidance, and separation constraints are admitted; it extends hard/soft semantics to placement. This boundary keeps M1's analytic feasibility claim narrow and makes the need for a general solver testable with actual layered fixtures.
+M1 should extend only the single static source-layer crop model: hard visibility, soft framing preferences (generalizing M0's single soft margin), measured violations, and stable result semantics. M2 begins when independently movable layers, per-layer target safe areas, collision avoidance, and separation constraints are admitted; it extends hard/soft semantics to placement. This boundary keeps M1's analytic feasibility claim narrow and makes the need for a general solver testable with actual layered fixtures.
 
 ### Rust-native dependency assessment
 
@@ -115,7 +126,7 @@ Avoid a public “plug in any solver” trait at M0: there is only one analytic 
 
 The eventual decision format should describe operations on geometry and time: crop, uniform or affine transform, layer placement, and keyframe trajectory. It should also identify constraints met or violated and any adapter approximation. It should not encode media bytes, editor UI state, or a new editorial timeline. [OpenTimelineIO](https://opentimelineio.readthedocs.io/en/latest/) covers editorial cuts, tracks, timing, transitions, markers, and media references; its role would be an optional carrier for editorial context, not the core representation of every crop, effect, or animation. An adapter must test what its target editor persists and reopens.
 
-Potential first adapters are a public editor's documented command API, a native project SDK, or an OTIO sidecar plus editor-specific application. [FilmCraft documents a headless engine and JSON command channel](https://github.com/storytold/filmcraft/blob/main/docs/architecture.md) and [versioned native project files](https://github.com/storytold/filmcraft/blob/main/docs/project-files.md), but an actual end-to-end editable round trip is still an integration experiment. [Blender background Python](https://docs.blender.org/manual/en/latest/advanced/command_line/arguments.html) is another possible future adapter. Rendering and encoding should continue through established tools.
+Candidate adapter surfaces are a public editor's documented command API, a native project SDK, or an OTIO sidecar plus editor-specific application. Examples among them: [FilmCraft documents a headless engine and JSON command channel](https://github.com/storytold/filmcraft/blob/main/docs/architecture.md) and [versioned native project files](https://github.com/storytold/filmcraft/blob/main/docs/project-files.md); [Blender background Python](https://docs.blender.org/manual/en/latest/advanced/command_line/arguments.html) is another. Neither is preferred; the adapter target is chosen in E-01, and any end-to-end editable round trip is an integration experiment. Rendering and encoding should continue through established tools.
 
 Run a minimal save/reopen spike as soon as M0 emits a stable crop decision, before committing to M2's layered design. Apply one crop through a documented editor surface, save and reopen the project, inspect the persisted editable operation, modify it in the editor, and compare the resulting geometry with the source decision. Record unsupported or approximated fields separately from rendered pixel differences. This tests the central editability claim early; a complete interchange format and production adapter can still wait until M4.
 

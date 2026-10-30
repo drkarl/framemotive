@@ -1,6 +1,6 @@
 # Incremental roadmap and proposed issue plan
 
-**Status:** M0 architecture decisions are accepted in ADR-001 through ADR-004. Project repository and registration status are recorded in the [README](README.md). Roadmap work is tracked in [GitHub issues #2–#18](https://github.com/drkarl/framemotive/issues); no release has been made. Implementation is tracked separately. Later milestones are hypotheses to be refined by fixtures and integration experiments.
+**Status:** M0 architecture decisions are accepted in ADR-001 through ADR-004. Project repository status is recorded in the [README](README.md). Roadmap work is tracked in [GitHub issues #2–#18](https://github.com/drkarl/framemotive/issues); no release has been made. Implementation is tracked separately. Later milestones are hypotheses to be refined by fixtures and integration experiments.
 
 ## Application-ready foundation (M0)
 
@@ -24,13 +24,17 @@ This is a proposed structure, not a command to create files now. Split modules o
 
 **Acceptance examples (to become synthetic fixtures):**
 
-1. Source `1920×1080`, target `1080×1920`, required ROI `[1200, 1400]×[300, 800]`: center crop hides part of the ROI; the library shifts the approximately `607.5×1080` source crop to include it and reports `Solved`.
-2. Same canvases, ROI spanning source x coordinates `200..1600`: the required width exceeds any full-bleed portrait crop; result is `Infeasible` with actual versus available width.
-3. ROI near an edge plus a valid margin extending outside the source: `Infeasible` for the supported in-bounds crop model, never a clipped success. A negative or nonfinite margin is `InvalidInput`.
-4. Nonfinite coordinates, zero canvas dimension, duplicate region IDs, below-resolution or out-of-bounds region: typed `InvalidInput` diagnostics.
-5. Empty ROI list with a preferred point: deterministic preferred-center crop; repeated runs on a pinned build yield identical geometry.
+1. Source `1920×1080`, target `1080×1920`, required ROI `[1200, 1400]×[300, 800]`, no focus: center crop hides part of the ROI. The crop is `607.5×1080`; the hard x-interval is `[792.5, 1200]`; the union center is x = 1300, so the desired origin is `1300 − 303.75 = 996.25`, inside the interval. Result: crop x `996.25..1603.75`, y `0`, `Solved`, subject centered rather than flush to the edge.
+2. Same canvases, ROI spanning source x coordinates `200..1600`: the required width exceeds any full-bleed portrait crop; result is `Infeasible` with actual versus available width and a fit/pad diagnostic (`s_fit = 0.5625`, no horizontal bars, vertical bars totaling `656.25 + 656.25 = 1312.5` target pixels); no `max_upscale` or T is set, so the unvalidated fit/pad alternative satisfies the hard constraints.
+3. Same canvases, ROI `[1850, 1900]×[300, 800]`, margin `100` extending past the right source edge: by default `Solved` with crop x `1312.5..1920` and a reported right-edge shortfall (achieved `20`, requested `100`, shortfall `80`). In `hard` margin mode: `Infeasible`, naming region ID, margin and the right edge. A negative or nonfinite margin is `InvalidInput`.
+4. Nonfinite coordinates, zero canvas dimension, duplicate region IDs, a wholly out-of-bounds region, or a region whose clipped portion is below the minimum extent: typed `InvalidInput` diagnostics. A region partly outside the source is clipped with a `region_clipped` diagnostic carrying the original bounds.
+5. Empty ROI list with a preferred point: deterministic preferred-center crop; repeated runs yield identical geometry.
+6. Source `1280×720`, target `1080×1920`, `max_upscale` `2.0`: the maximal crop is `405×720` and `s = 1080/405 = 2.666…` exceeds the limit, so `Infeasible` with measured scale and limit (and a fit/pad diagnostic: `s_fit = 0.84375 ≤ 2.0`, vertical bars totaling `1312.5` target pixels; no T, so the alternative satisfies the hard constraints).
+7. Source `1920×1080`, target `1080×1080` (crop `1080×1080`, `s = 1`), required ROI `[1500, 1700]×[300, 700]`, focus `(1000, 540)`, safe rectangle `T = [100, 980]×[100, 980]`: the hard x-interval from source and ROI containment is `[620, 840]`; T adds `x ≤ 1500 − 100 = 1400` and `x ≥ 1700 − 980 = 720`, giving `[720, 840]`. The focus-derived origin `1000 − 540 = 460` clamps to `720`; crop x `720..1800`, y `0`; the ROI maps to `[780, 980]×[300, 700]`, inside T. Without T the origin would be `620`.
+8. Source `1000×1000`, target `500×1000`, required ROI `[300, 700]×[200, 800]`, margin `100`, focus `(0, 500)`. x: `cw = 500`, hard interval `[200, 300]`, `dL = dR = 300`; `lo = 200 + m'`, `hi = 300 − m'`, so `m* = 50` and `M = [250, 250]`: crop x `250..750`, achieved margin `50` left and right, shortfall `50` each (requested `100`); the focus origin `0 − 250` clamps into `M`. y: crop height `1000 = H`, so y `0`; top/bottom achieved margin `200`, no shortfall. `Solved`. In `hard` margin mode: `Infeasible` (`m* = 50 < 100`).
+9. Source `1000×1000`, target `1000×1000`, `max_upscale` `0.5`, any ROI: `s = 1 > 0.5`, so `Infeasible`; `s_fit = 1 > 0.5`, so the fit alternative is reported as violating `max_upscale`.
 
-**M0 completion bar:** Tests compare source containment, aspect, all required ROI containment, affine mapping, status and diagnostic codes using independent assertions. README clearly says one static layer only. A normal `cargo test` and example run pass on supported platforms. No rendering or editor integration is claimed.
+**M0 completion bar:** Tests compare source containment, aspect, all required ROI containment, affine mapping, status and diagnostic codes using independent assertions. README clearly says one static layer only. A normal `cargo test` and example run pass on supported platforms. Canonical output contract (ADR-002): golden fixtures record exact `f64` bit patterns (`to_bits` hex) and CI on Linux, macOS and Windows compares them; M0 decisions are bitwise identical across the three. No rendering or editor integration is claimed.
 
 ## Milestones after M0
 
@@ -38,7 +42,7 @@ This is a proposed structure, not a command to create files now. Split modules o
 | --- | --- | --- |
 | Early editor spike | Apply one M0 crop in an editor, save, reopen, inspect and modify its editable operation. | Persisted crop/transform geometry and unsupported fields recorded; result informs the later adapter contract. |
 | M1 — Reliable static crop API | Single source layer only: hard visibility, soft framing preferences with measured violations, stable result schema and a small versioned CLI. | Static fixtures demonstrate priority and tie behavior, useful infeasibility evidence and no silent hard-constraint violation. |
-| M2 — Layered layout | Add independently movable graphics/captions, target safe areas, layer bounds, collision avoidance and separation with hard/soft placement semantics; choose a solver from representative fixtures. | Two- and three-layer cases, measured violations and conflict IDs, infeasible versus indeterminate status, native dependency/licence review and measured solver behavior. |
+| M2 — Layered layout | Add independently movable graphics/captions, per-layer target safe areas, layer bounds, collision avoidance and separation with hard/soft placement semantics; choose a solver from representative fixtures. | Two- and three-layer cases, measured violations and conflict IDs, infeasible versus indeterminate status, native dependency/licence review and measured solver behavior. |
 | M3 — Time-varying composition | Validated caller-supplied subject tracks on a rational timebase, cut-aware smoothing, keyframe output and between-sample validation. | Moving-region fixtures include gaps, cuts and uncertain observations; velocity/visibility measurements, temporal error bounds and unverified spans are explicit. |
 | M4 — Editable interchange | Versioned decision document and a maintained editor adapter extending the early spike. | Save/reopen/modify fixtures, unsupported-operation reporting, and separate structural and rendered fidelity results. |
 | M5 — Hardening and release | Property/fuzz tests, benchmarks, platform CI, docs/examples, packaging and compatibility policy. | Representative public cases, explicit performance budgets and dependency licence review. |
@@ -55,7 +59,7 @@ Each issue is deliberately bounded. Dependencies refer to the IDs below; linked 
 | [F-01](https://github.com/drkarl/framemotive/issues/3) / A-01 | Add a Cargo library skeleton and update the existing README to reflect implemented capabilities. | Source tree and docs independently understandable; no empty feature claims. |
 | [F-02](https://github.com/drkarl/framemotive/issues/4) / F-01 | Add validated `Canvas`, `Rect`, `Region` and typed diagnostics. | Tests for finite/positive/bounds/ID validation and boundary convention. |
 | [F-03](https://github.com/drkarl/framemotive/issues/5) / F-02 | Implement maximal static crop interval algorithm and structured decision. | Synthetic off-center, impossible-wide, square, and empty-ROI fixtures; independent invariant checker. |
-| [F-04](https://github.com/drkarl/framemotive/issues/6) / F-03 | Add runnable synthetic example and accurate README status. | Example executes using real library API; docs distinguish implemented and planned. M0 complete. |
+| [F-04](https://github.com/drkarl/framemotive/issues/6) / F-03 | Add runnable synthetic example and accurate README status. | Example executes using real library API; docs distinguish implemented and planned. Golden `to_bits` fixtures pass on Linux, macOS and Windows CI. M0 complete. |
 | [E-01](https://github.com/drkarl/framemotive/issues/7) / F-04 | Prototype one editor save/reopen/modify translation of an M0 crop. | Persisted editable geometry and unsupported or approximated fields measured before M2 design is committed. |
 | [N-01](https://github.com/drkarl/framemotive/issues/8) / F-04 | Define and implement hard/soft crop semantics for one static source layer. | Priority, measured violation, tie and infeasibility fixtures; no independently movable overlay or collision promise. |
 | [D-01](https://github.com/drkarl/framemotive/issues/9) / F-04 | Define versioned JSON CLI contract for the supported static operation in M1. | Round-trip schema tests, bad-input diagnostics, stable output ordering. |
@@ -74,8 +78,8 @@ Each issue is deliberately bounded. Dependencies refer to the IDs below; linked 
 ## Accepted M0 decisions
 
 1. Rust is the primary core. M0 uses a typed library and example with no optimizer or CLI; the versioned CLI follows in M1.
-2. M0 handles one full-bleed visual, maximal source crop, required ROIs, optional uniform margin and preferred focus. Padding and multi-layer placement remain outside M0.
-3. Canvas dimensions are `1..=65_536` per axis. ADR-002 defines post-computation tolerance and a minimum required-region extent. A valid margin outside source bounds is model-scoped `Infeasible`.
+2. M0 handles one full-bleed visual, maximal source crop, required ROIs, optional uniform margin (soft by default) and preferred focus, optional `max_upscale` and target safe rectangle. Padding and multi-layer placement remain outside M0.
+3. Canvas dimensions are `1..=65_536` per axis. ADR-002 defines post-computation tolerance and a minimum required-region extent. Margin is a soft preference by default: a margin extending past the source yields `Solved` with reported shortfall, and is model-scoped `Infeasible` only in `hard` margin mode. Partly out-of-frame regions are clipped with a diagnostic.
 4. The M0 public types and three outcomes are recorded in ADR-003; `Unsupported` and `Indeterminate` remain future outcome names.
 
 The target editor and supported automation surface for the early save/reopen spike are chosen in E-01. Multi-layer solver selection and temporal input remain later decisions.
