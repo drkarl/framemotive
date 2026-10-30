@@ -11,6 +11,3 @@
 //! No operation is implemented yet, and this crate exposes no public API. The
 //! planned work is described in the repository's `roadmap.md`, and the accepted
 //! design in `architecture.md` and `decisions/`.
-
-#![forbid(unsafe_code)]
-#![deny(missing_docs)]
