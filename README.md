@@ -32,12 +32,14 @@ cargo install cargo-deny --version 0.19.0 --locked   # once
 
 ### Platform checks
 
-Per-push CI runs on Linux x86_64 only. macOS and Windows are checked by the manually triggered `release-platforms` workflow, which must pass before a release. Linux aarch64 can be checked locally with `cross` (QEMU in a container):
+Per-push CI runs on Linux x86_64 only. macOS and Windows are checked by the manually triggered `release-platforms` workflow (tests and clippy only), which must pass before a release. Linux aarch64 is checked locally with `cross` (QEMU in a container): optional during development, required before a release. It needs podman.
 
 ```sh
 cargo install cross --locked
-CROSS_CONTAINER_ENGINE=podman cross test --target aarch64-unknown-linux-gnu
+CROSS_CONTAINER_ENGINE=podman RUSTC_WRAPPER= cross test --target aarch64-unknown-linux-gnu
 ```
+
+The empty `RUSTC_WRAPPER` disables a host-configured wrapper such as sccache inside the container.
 
 ## Design provenance
 
