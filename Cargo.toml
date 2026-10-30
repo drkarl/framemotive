@@ -3,7 +3,7 @@ name = "framemotive"
 version = "0.0.0"
 edition = "2024"
 rust-version = "1.94"
-description = "Computes editable crop and layout adaptation decisions from caller-supplied geometry."
+description = "Planned library for editable crop and layout adaptation decisions; no operations implemented yet."
 publish = false
 
 [dependencies]
