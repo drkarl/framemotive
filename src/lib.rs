@@ -1,4 +1,4 @@
-//! FrameMotive computes editable crop and layout adaptation decisions from
+//! FrameMotive will compute editable crop and layout adaptation decisions from
 //! caller-supplied geometry.
 //!
 //! Given a source composition and layout constraints, the crate will produce
