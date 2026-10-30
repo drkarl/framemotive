@@ -1,6 +1,6 @@
 # FrameMotive — Phase A design package
 
-**Status:** M0 architecture decisions accepted 29 October 2026. The design documents are on GitHub `main`. This repository contains design documents and no implementation.
+**Status:** M0 architecture decisions accepted 29 October 2026. The design documents are on GitHub `main`. This repository contains design documents and an empty Rust library crate (`framemotive`). No geometry, crop, or layout operation is implemented yet, and the crate exposes no public API.
 
 ## Purpose
 
@@ -18,6 +18,18 @@ Potential users include video editors, campaign production tools, motion-graphic
 ## M0 decision status
 
 ADR-001 through ADR-004 record the accepted M0 operation, coordinate and numeric contract, Rust packaging, outcomes, and editable-decision boundary. The first implementation milestone is specified in [the roadmap](roadmap.md#application-ready-foundation-m0).
+
+## Development
+
+The crate is pinned to Rust 1.94.1 by `rust-toolchain.toml` (edition 2024, no dependencies). It currently contains crate-level documentation only, so the commands below verify the build and tooling, not any feature.
+
+```sh
+cargo build
+cargo test
+cargo clippy --all-targets -- -D warnings
+cargo fmt --check
+cargo doc --no-deps
+```
 
 ## Design provenance
 
