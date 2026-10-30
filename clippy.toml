@@ -1,5 +1,6 @@
 # Canonical-output contract (ADR-002): IEEE 754 basic operations only.
 # sqrt is correctly rounded by IEEE 754 and stays allowed.
+# Free functions from math crates (e.g. libm) must be added here if such a dependency is ever introduced.
 disallowed-methods = [
     { path = "f64::mul_add", reason = "canonical-output contract (ADR-002): IEEE basic operations only" },
     { path = "f64::sin", reason = "canonical-output contract (ADR-002): IEEE basic operations only" },
@@ -47,6 +48,14 @@ disallowed-methods = [
     { path = "f32::powi", reason = "canonical-output contract (ADR-002): IEEE basic operations only" },
     { path = "f32::cbrt", reason = "canonical-output contract (ADR-002): IEEE basic operations only" },
     { path = "f32::hypot", reason = "canonical-output contract (ADR-002): IEEE basic operations only" },
+    { path = "f64::sin_cos", reason = "canonical-output contract (ADR-002): IEEE basic operations only" },
+    { path = "f64::asinh", reason = "canonical-output contract (ADR-002): IEEE basic operations only" },
+    { path = "f64::acosh", reason = "canonical-output contract (ADR-002): IEEE basic operations only" },
+    { path = "f64::atanh", reason = "canonical-output contract (ADR-002): IEEE basic operations only" },
+    { path = "f32::sin_cos", reason = "canonical-output contract (ADR-002): IEEE basic operations only" },
+    { path = "f32::asinh", reason = "canonical-output contract (ADR-002): IEEE basic operations only" },
+    { path = "f32::acosh", reason = "canonical-output contract (ADR-002): IEEE basic operations only" },
+    { path = "f32::atanh", reason = "canonical-output contract (ADR-002): IEEE basic operations only" },
 ]
 
 # Product name is prose, not code.
