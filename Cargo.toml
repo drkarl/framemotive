@@ -7,3 +7,16 @@ description = "Planned library for editable crop and layout adaptation decisions
 publish = false
 
 [dependencies]
+
+[lints.rust]
+unsafe_code = "forbid"
+missing_docs = "deny"
+
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+# Nursery is intentionally not enabled: suboptimal_flops suggests mul_add, which
+# the canonical-output contract (ADR-002) forbids.
+suboptimal_flops = "allow"
+# Geometry code compares exact floats and casts between numeric types by design.
+float_cmp = "allow"
+cast_precision_loss = "allow"
