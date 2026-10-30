@@ -24,11 +24,19 @@ ADR-001 through ADR-004 record the accepted M0 operation, coordinate and numeric
 The crate is pinned to Rust 1.94.1 by `rust-toolchain.toml` (edition 2024, no dependencies). It currently contains crate-level documentation only, so the commands below verify the build and tooling, not any feature.
 
 ```sh
-cargo build
-cargo test
-cargo clippy --all-targets -- -D warnings
-cargo fmt --check
-cargo doc --no-deps
+cargo install cargo-deny --version 0.19.0 --locked   # once
+./scripts/check.sh
+```
+
+`scripts/check.sh` is the single quality gate (rustfmt, clippy with `-D warnings`, tests, rustdoc with warnings denied, and `cargo deny` for advisories, licences, bans and sources). CI runs the same script.
+
+### Platform checks
+
+Per-push CI runs on Linux x86_64 only. macOS and Windows are checked by the manually triggered `release-platforms` workflow, which must pass before a release. Linux aarch64 can be checked locally with `cross` (QEMU in a container):
+
+```sh
+cargo install cross --locked
+CROSS_CONTAINER_ENGINE=podman cross test --target aarch64-unknown-linux-gnu
 ```
 
 ## Design provenance
