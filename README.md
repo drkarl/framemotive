@@ -73,7 +73,7 @@ Non-goals: decoding or rendering media, detecting subjects or saliency, making c
 | --- | --- |
 | Requirements, architecture, decision records | Written. M0 contract accepted (ADR-001 to ADR-004); initial-scope update accepted (ADR-005). |
 | Rust crate | Empty library crate with crate-level documentation only; no public API. |
-| Quality gate and CI | Working: rustfmt, clippy `-D warnings`, tests, rustdoc, `cargo deny`. |
+| Quality gate and CI | Local gate working (`./scripts/check.sh` passes: rustfmt, clippy `-D warnings`, tests, rustdoc, `cargo deny`). CI workflows are configured but have not yet run on GitHub. |
 | Crop computation, JSON, CLI | Not implemented. |
 | Releases, licence | No release; not published. Dual-licensed under MIT or Apache-2.0 ([License](#license)). |
 
@@ -95,11 +95,11 @@ cargo install cargo-deny --version 0.19.0 --locked   # once
 ./scripts/check.sh
 ```
 
-`scripts/check.sh` is the single quality gate (rustfmt, clippy with `-D warnings`, tests, rustdoc with warnings denied, and `cargo deny` for advisories, licences, bans and sources). CI runs the same script.
+`scripts/check.sh` is the single quality gate (rustfmt, clippy with `-D warnings`, tests, rustdoc with warnings denied, and `cargo deny` for advisories, licences, bans and sources). The CI workflow (`.github/workflows/ci.yml`) is configured to run the same script; it has not yet run on GitHub.
 
 ### Platform checks
 
-Per-push CI runs on Linux x86_64 only. macOS and Windows are checked by the manually triggered `release-platforms` workflow (tests and clippy only), which must pass before a release. Linux aarch64 is checked locally with `cross` (QEMU in a container): optional during development, required before a release. It needs podman.
+Per-push CI is configured for Linux x86_64 only; it has not yet run on GitHub. macOS and Windows are covered by the manually triggered `release-platforms` workflow (tests and clippy only), which is intended to pass before a release. Linux aarch64 is checked locally with `cross` (QEMU in a container): optional during development, required before a release. It needs podman.
 
 ```sh
 cargo install cross --locked
