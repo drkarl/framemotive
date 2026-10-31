@@ -423,7 +423,7 @@ FrameMotive handles caller geometry, not media, so the attack surface is small: 
 | Property tests (dev) | [`proptest`](https://docs.rs/proptest/latest/proptest/) | Shrinking and persisted failure seeds; `quickcheck` shrinks less well. |
 | Fuzzing (hardening) | [`cargo-fuzz`](https://rust-fuzz.github.io/book/cargo-fuzz.html) in a separate, unpublished `fuzz/` directory | Needs nightly; kept out of the stable gate. |
 
-The default feature set has no dependencies, so library users pull nothing. Every dependency passes `cargo deny` (licence allow-list, advisories, bans, sources) before adoption, and versions are pinned in `Cargo.lock`. Optimization crates (Cassowary, `good_lp`, Clarabel, `argmin`, CP-SAT) are not candidates for the initial plan; their earlier assessment is kept in section 15.
+The default feature set has no dependencies, so library users pull nothing. Every dependency passes `cargo deny` (licence allow-list, advisories, bans, sources) before adoption, and versions are pinned in `Cargo.lock`. Optimization crates (Cassowary, `good_lp`, Clarabel, `argmin`, CP-SAT) are not candidates for the initial plan; their earlier assessment is kept verbatim in [section 15](#earlier-design-notes-kept-for-deferred-work).
 
 ## 13. Testing strategy
 
@@ -476,23 +476,66 @@ These remain recorded so the design history is not lost. Reopening any of them n
 
 #### Earlier design notes kept for deferred work
 
-**Subject-track input contract.** Moving subjects would arrive as caller-supplied metadata, not detections performed by the core: a stable ID with a declared source coordinate space and timebase, time-stamped bounds or points, and explicit cut boundaries. The contract must state how observation gaps, off-screen intervals, confidence and caller-supplied importance affect hard visibility and soft framing, and distinguish observed samples from interpolated or predicted positions; no solver may assume an unobserved span is continuously visible. Temporal decisions need a declared trade-off between subject visibility and crop motion, measured on a rational media clock, with continuity penalties reset at cuts and spans without a justified visibility bound reported as unverified.
+The text below is copied verbatim from the M0-era architecture (commit `1920cfa`) so the technical history stays in place. Where it says "M0", "M1", "later" or "next", it uses the milestone plan of that version; ADR-005 supersedes its scheduling statements (the solver benchmark and the early editor spike are deferred, not planned). Section headings are demoted only.
 
-**Layered coordinates.** Media-local → layer-local → source-composition → target-composition transforms must be explicit and ordered. A region carries its declared coordinate space; normalized coordinates, if accepted, are converted at the boundary using the relevant canvas.
+##### Future subject-track input contract
 
-**Solver comparison** (to run only if M2 is reopened):
+Moving subjects will arrive as caller-supplied metadata, not detections performed by the core. Before M3 implementation, define a track as a stable ID with a declared source coordinate space and timebase, time-stamped bounds or points, and explicit cut boundaries. The contract must state how observation gaps, off-screen intervals, confidence, and caller-supplied importance affect hard visibility and soft framing. It must also distinguish observed samples from interpolated or predicted positions; no solver may assume an unobserved span is continuously visible. Validate monotonic sample times, duplicate times, bounds, and timebase compatibility at ingestion. The exact serialization and interpolation policy remain open until moving-subject fixtures exist.
 
-| Method | Good fit | Weak point |
+Temporal decisions need a declared trade-off between subject visibility and crop motion. Measure speed and acceleration on the rational media clock, reset continuity penalties at cuts, and validate visibility between keyframes using an explicit track interpolation or conservative bound. If the input cannot justify such a bound, report the affected span as unverified rather than claiming continuous visibility.
+
+##### Layered coordinates (from the coordinate contract)
+
+- In later layers, media-local → layer-local → source-composition → target-composition transforms must be explicit and ordered. A region carries its declared coordinate space; never silently reinterpret normalized coordinates as pixels. Normalized values, if accepted later, are converted at the boundary using the relevant canvas.
+
+##### Future solver architecture: compare before selecting
+
+| Method | Good fit | Weak point / decision trigger |
 | --- | --- | --- |
-| Analytic geometry | Crop, clamp, containment, pairwise validation. | Cannot decide general non-overlap among many movable layers. |
-| Cassowary / linear constraints ([`cassowary`](https://docs.rs/cassowary/latest/cassowary/), [Kiwi](https://github.com/nucleic/kiwi)) | Interactive position and scale relationships with priorities. | Disjunctive collision avoidance is not linear; equal-strength solutions can vary without tie-break constraints. |
-| MILP / CP-SAT ([`good_lp`](https://github.com/rust-or/good_lp), [OR-Tools CP-SAT](https://developers.google.com/optimization/cp/cp_solver)) | Disjunctive non-overlap, discrete layout modes, priority tiers; explicit feasible/infeasible/unknown statuses. | Integer quantization, native distribution, latency, licence review; `good_lp` does not guarantee deterministic results. |
-| Convex / nonlinear ([Clarabel](https://clarabel.org/stable/), [`argmin`](https://argmin-rs.org/)) | Smooth trajectory penalties. | Cannot express either/or choices; local search proves neither feasibility nor infeasibility. |
-| Search / dynamic programming | Cut-aware trajectory candidates. | Candidate design can hide failure cases. |
+| Analytic geometry | M0 crop, clamp, containment and pairwise validation. Small, auditable, no solver installation. | Cannot decide general non-overlap or trade-offs between many movable layers. |
+| Cassowary / linear constraints | Interactive position and scale relationships with priorities; Rust [`cassowary`](https://docs.rs/cassowary/latest/cassowary/) or C++/Python [Kiwi](https://github.com/nucleic/kiwi). | Disjunctive collision avoidance, crop alternatives, and temporal path choices are not simple linear equalities. The Rust crate notes that equal-strength solutions can vary without further tie-break constraints; verify determinism. |
+| MILP / CP-SAT | Disjunctive non-overlap, optional padding, discrete layout modes, priority tiers; [OR-Tools CP-SAT](https://developers.google.com/optimization/cp/cp_solver) has explicit feasible/infeasible/unknown statuses and [2D no-overlap](https://or-tools.github.io/docs/pdoc/ortools/sat/python/cp_model). | Integer quantization, native distribution or binding overhead, solve latency, and licence review. Rust [`good_lp`](https://github.com/rust-or/good_lp) models LP/MILP but its own documentation does **not** guarantee deterministic solver results. No dependency is selected for M0. |
+| Continuous nonlinear optimization | Smooth crop trajectories and differentiable penalties. [SciPy optimize](https://docs.scipy.org/doc/scipy/reference/optimize.html) is a mature reference. | Local minima and weak infeasibility proof; avoid presenting a failed search as impossibility. |
+| Search / dynamic programming | Cut-aware trajectory candidates and temporal regularization. | Candidate design can hide failure cases; validate on moving-subject fixtures. |
 
-Any later solver sits behind a crate-private model/solve/validate boundary, reports `Indeterminate` (never `Infeasible`) on timeout or failed search, and records backend, settings and budget in diagnostics. Hard constraints are rechecked after rounding and adapter translation.
+Later architecture can combine a static feasibility stage, optimization stage, and independent validator. Hard constraints must be checked after rounding and after adapter translation. Soft priorities need an explicit objective and ranking policy; weighted sums alone can let a weak preference outweigh an intended stronger category if scales are wrong. A bounded solver may return one best known solution plus diagnostics initially; multiple ranked solutions should wait for users who need them.
 
-**Editor adapters.** Candidate surfaces were a documented editor command API, a native project SDK, or an OTIO sidecar. An adapter would report `supported`, `approximated`, `unsupported` or `unverified` per operation and verify a saved and reopened project, distinguishing structural fidelity from rendered pixels.
+For later layered models, infeasibility diagnostics should identify the supported model, affected constraint and layer IDs, and relevant measured bounds or violation magnitudes. A minimal conflicting set is useful when available but is not required for a truthful result. A timeout or failed search must remain `Indeterminate`.
+
+M1 should extend only the single static source-layer crop model: hard visibility, soft framing preferences (generalizing M0's single soft margin), measured violations, and stable result semantics. M2 begins when independently movable layers, per-layer target safe areas, collision avoidance, and separation constraints are admitted; it extends hard/soft semantics to placement. This boundary keeps M1's analytic feasibility claim narrow and makes the need for a general solver testable with actual layered fixtures.
+
+###### Rust-native dependency assessment
+
+The preferred stack is a Rust core with a small CLI in M1. Python bindings are a possible later distribution channel, not a reason to move the core to Python. Each dependency below is a **candidate**, not yet selected. Recheck the exact release licence and transitive dependencies before adoption.
+
+| Candidate | Capability and fit | Correctness, deployment, and licence caution |
+| --- | --- | --- |
+| [`kurbo`](https://docs.rs/kurbo/latest/kurbo/) | 2D points, rectangles, affine transforms and later curves; natural media-plane vocabulary. | Apache-2.0 OR MIT; public types do not enforce finite/positive extents, so validated wrappers remain necessary. M0 is simple enough to keep the public model independent of the crate. |
+| [`nalgebra`](https://www.nalgebra.rs/docs/) | General matrices/transforms for more complex layer geometry. | Apache-2.0; broader API and dependency footprint than M0 requires. Add when rotation, chained transforms, or linear algebra is demonstrated. |
+| [`parry2d`](https://docs.rs/parry2d/latest/parry2d/) / [`geo`](https://docs.rs/geo/latest/geo/) | Collision/spatial queries or polygon operations if rectangles cease to suffice. | Useful for complex shapes; large collision/geo machinery is unnecessary for M0 axis-aligned rectangle overlap. Validate transitive licence/features if added. |
+| [`cassowary`](https://docs.rs/cassowary/latest/cassowary/) | Incremental linear constraints with strengths for movable overlays. | It is low-level and does not inherently solve disjunctive no-overlap; its docs describe nondeterministic equal-strength choices. Need deterministic objective/tie-break tests and licence verification at a pinned release. |
+| [`good_lp`](https://github.com/rust-or/good_lp) | Rust modeling of LP/MILP; backend can be selected by feature. | MIT for modeling crate; each solver has its own licence/build requirements. Default CBC needs native runtime; pure-Rust `microlp` trades speed for simple packaging; `good_lp` explicitly does not guarantee solver determinism. |
+| [Clarabel.rs](https://clarabel.org/stable/) | Native Rust convex LP/QP/conic solver; promising for smooth trajectory penalties after layout modes are fixed. | Apache-2.0; convex continuous models cannot directly express either/or collisions or discrete crop/pad choices. Numerical tolerances and solve status need independent geometric validation. |
+| [`argmin`](https://argmin-rs.org/) | Pure-Rust framework for nonlinear numerical methods and observability. | MIT OR Apache-2.0; local search does not prove global feasibility or infeasibility. Use only for a clearly formulated smooth subproblem, with deterministic initialization/budgets. |
+| [`splines`](https://docs.rs/splines/latest/splines/) / [`enterpolation`](https://docs.rs/enterpolation/latest/enterpolation/) | Interpolate future crop and layer keyframes. | Interpolation alone does not enforce visibility at unsampled times or speed/acceleration limits. Choose only after defining temporal validation and editor keyframe semantics; pin and audit licence. |
+| [OR-Tools CP-SAT](https://developers.google.com/optimization/cp/cp_solver) | Mature C++ core with Python/C++ interfaces and explicit status semantics; strong candidate if discrete layout choices dominate. | Apache-2.0; integer coordinate scaling and Rust FFI/deployment need a spike. Native code is acceptable if it avoids recreating a mature solver. `UNKNOWN` must never be reported as infeasible. |
+
+Avoid a public “plug in any solver” trait at M0: there is only one analytic operation. Once at least two problem classes or backends exist, isolate model construction, solve status, budget, and post-solve validation behind a crate-private boundary; expose stable outcomes rather than solver-specific variables. Replacing a backend may change tie-breaking or optimality, so record backend and settings in diagnostics when that becomes relevant. No optimization crate belongs in the first foundation by default.
+
+##### Editable output and interchange
+
+The eventual decision format should describe operations on geometry and time: crop, uniform or affine transform, layer placement, and keyframe trajectory. It should also identify constraints met or violated and any adapter approximation. It should not encode media bytes, editor UI state, or a new editorial timeline. [OpenTimelineIO](https://opentimelineio.readthedocs.io/en/latest/) covers editorial cuts, tracks, timing, transitions, markers, and media references; its role would be an optional carrier for editorial context, not the core representation of every crop, effect, or animation. An adapter must test what its target editor persists and reopens.
+
+Candidate adapter surfaces are a public editor's documented command API, a native project SDK, or an OTIO sidecar plus editor-specific application. Examples among them: [FilmCraft documents a headless engine and JSON command channel](https://github.com/storytold/filmcraft/blob/main/docs/architecture.md) and [versioned native project files](https://github.com/storytold/filmcraft/blob/main/docs/project-files.md); [Blender background Python](https://docs.blender.org/manual/en/latest/advanced/command_line/arguments.html) is another. Neither is preferred; the adapter target is chosen in E-01, and any end-to-end editable round trip is an integration experiment. Rendering and encoding should continue through established tools.
+
+Run a minimal save/reopen spike as soon as M0 emits a stable crop decision, before committing to M2's layered design. Apply one crop through a documented editor surface, save and reopen the project, inspect the persisted editable operation, modify it in the editor, and compare the resulting geometry with the source decision. Record unsupported or approximated fields separately from rendered pixel differences. This tests the central editability claim early; a complete interchange format and production adapter can still wait until M4.
+
+##### Technical risks and validation experiments
+
+1. **Model usefulness:** test a synthetic landscape shot with central focus and edge ROI against center-crop. The ROI must survive or receive an explicit infeasibility report. A crop that simply mirrors center-crop adds little value.
+2. **Geometry semantics:** test rectangular containment at exact boundaries, fractional crop sizes, extreme aspect ratios, and all nonfinite inputs. Use an independent validator in tests.
+3. **Different editor coordinates:** perform the early save/reopen/modify spike above once the M0 crop decision is stable; compare persisted geometry and rendered output separately.
+4. **Solver fit:** prepare synthetic two-layer and three-layer collision cases, then prototype linear/Cassowary and MILP/CP approaches separately. Measure solve time, feasibility status, deterministic tie behavior, and packaging before choosing one.
 
 ## 16. Open technical questions
 

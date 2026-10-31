@@ -107,7 +107,3 @@ CROSS_CONTAINER_ENGINE=podman RUSTC_WRAPPER= cross test --target aarch64-unknown
 ```
 
 The empty `RUSTC_WRAPPER` disables a host-configured wrapper such as sccache inside the container.
-
-## Design provenance
-
-The design is specified from generic geometry, publicly documented tool behavior and synthetic examples. It does not depend on any particular editor's project format or on proprietary data.
