@@ -1,6 +1,6 @@
 # Roadmap and issue plan
 
-**Status:** the architecture is written and the M0 contract is accepted (ADR-001 to ADR-004). [ADR-005](decisions/ADR-005-initial-scope-static-cropping.md) sets the initial plan: **M0 and M1 are committed**, followed by **M5 hardening**. **M2, M3 and M4 are deferred**: they are kept below as a record, have no schedule, and gate nothing. The repository contains the design documents, an empty library crate and the quality gate (`./scripts/check.sh`, run by CI on Linux x86_64); **no crop operation is implemented yet** and no release has been made. Issues are tracked on [GitHub](https://github.com/drkarl/framemotive/issues); the [README](README.md) records repository status.
+**Status:** the architecture is written and the M0 contract is accepted (ADR-001 to ADR-004). [ADR-005](decisions/ADR-005-initial-scope-static-cropping.md) sets the initial plan: **M0 and M1 are committed**, followed by **M5 hardening**. **M2, M3 and M4 are deferred**: they are kept below as a record, have no schedule, and gate nothing. The repository contains the design documents, an empty library crate and the quality gate (`./scripts/check.sh`, also invoked by the configured Linux x86_64 CI workflow, which has not yet run on GitHub); **no crop operation is implemented yet** and no release has been made. Issues are tracked on [GitHub](https://github.com/drkarl/framemotive/issues); the [README](README.md) records repository status.
 
 ## How to read this plan
 
@@ -206,7 +206,7 @@ Each issue is deliberately bounded. Dependencies refer to the IDs below; linked 
 | --- | --- | --- |
 | [A-01](https://github.com/drkarl/framemotive/issues/2) / none | done | Record the accepted M0 contract in ADR-001 to ADR-004. |
 | [F-01](https://github.com/drkarl/framemotive/issues/3) / A-01 | done | Cargo library skeleton. |
-| [Q-00](https://github.com/drkarl/framemotive/issues/24) / F-01 | done | Quality gate and per-push Linux CI; manual macOS/Windows workflow; documented local `cross` aarch64 command. |
+| [Q-00](https://github.com/drkarl/framemotive/issues/24) / F-01 | done | Quality gate; per-push Linux CI workflow (configured, not yet run on GitHub); manual macOS/Windows workflow; documented local `cross` aarch64 command. |
 | Q-03 draft / Q-00 | M0 | Panic-free lint denies for library code. |
 | [F-02](https://github.com/drkarl/framemotive/issues/4) / Q-03 | M0 | Validated `Canvas`, `Rect`, `Region` and typed diagnostics. |
 | [F-03](https://github.com/drkarl/framemotive/issues/5) / F-02 | M0 | Parent of F-03a, F-03b and F-03c. |
