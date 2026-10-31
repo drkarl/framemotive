@@ -71,7 +71,7 @@ Non-goals: decoding or rendering media, detecting subjects or saliency, making c
 
 | Area | State |
 | --- | --- |
-| Requirements, architecture, decision records | Written. M0 contract accepted (ADR-001 to ADR-004); initial-scope update proposed (ADR-005). |
+| Requirements, architecture, decision records | Written. M0 contract accepted (ADR-001 to ADR-004); initial-scope update accepted (ADR-005). |
 | Rust crate | Empty library crate with crate-level documentation only; no public API. |
 | Quality gate and CI | Working: rustfmt, clippy `-D warnings`, tests, rustdoc, `cargo deny`. |
 | Crop computation, JSON, CLI | Not implemented. |

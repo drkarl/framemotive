@@ -53,6 +53,7 @@ flowchart TD
   S01 --> Q04
   S06 --> Q04
   N01 --> Q05["Q-05 grid oracle"]
+  F03b --> Q05
   S06 --> Q06["Q-06 M1 goldens"]
   D01 --> Q06
   D02 --> Q07["Q-07 feature-matrix gate"]
@@ -92,7 +93,7 @@ Source layout follows [architecture §5](architecture.md#5-modules-and-responsib
 | --- | --- | --- | --- | --- | --- | --- |
 | 1 | Q-03 (draft) | Enable panic-free lint denies for library code (architecture §2). | — | Denies active in `Cargo.toml`; test code exempt; gate green on the empty crate plus a sentinel module. | `check.sh`. | 2–4 |
 | 2 | F-02 ([#4](https://github.com/drkarl/framemotive/issues/4)) | Validated `Canvas`, `Rect`, `Region`, margin, focus, `max_upscale`, safe rectangle; typed diagnostics; region clipping; ADR-002 tolerance function. | Q-03 | Every invalid input of the issue yields a stable diagnostic code; partly outside regions are clipped with `region_clipped`; minimum-extent rule enforced. | Boundary, fractional and numeric-resolution fixtures; every non-finite input. | 10–16 |
-| 3 | F-03a ([#21](https://github.com/drkarl/framemotive/issues/21)) | Maximal crop, region union, hard interval, default focus, clamp, scale, affine map; `Solved` vs `Infeasible`; empty region list. | F-02 | Examples 1, 2 and 5. | Fixtures with hand-derived values; repeated runs identical. | 8–14 |
+| 3 | F-03a ([#21](https://github.com/drkarl/framemotive/issues/21)) | Maximal crop, region union, hard interval, default focus, clamp, scale, affine map; `Solved` vs `Infeasible`; empty region list. | F-02 | Examples 1, 2 and 5; hard-interval emptiness is decided exactly on validated inputs and tolerance applies only to rechecks after solving (documented and fixture-tested at equality). | Fixtures with hand-derived values; repeated runs identical. | 8–14 |
 | 4 | F-03b ([#22](https://github.com/drkarl/framemotive/issues/22)) | Soft and hard margin; closed-form `m*`; per-region per-edge achieved margin and shortfall. | F-03a | Examples 3 and 8; large finite margins do not overflow; focus never reduces achieved margin. | Fixtures; extreme-margin cases. | 10–16 |
 | 5 | F-03c ([#23](https://github.com/drkarl/framemotive/issues/23)) | Safe rectangle T, `max_upscale`, fit/pad alternative with per-constraint checks. | F-03a | Examples 6, 7 and 9; the alternative is never a returned decision. | Fixtures; T-caused emptiness names T. | 8–14 |
 | 6 | Q-01a ([#25](https://github.com/drkarl/framemotive/issues/25)) | Independent geometry validator (`verify`) and `proptest` properties for invariants 1–8. | F-03a (extend with F-03b, F-03c) | Validator shares no solver code; failing seeds kept as fixtures. | Properties over generated finite inputs. | 10–16 |
@@ -118,7 +119,7 @@ Source layout follows [architecture §5](architecture.md#5-modules-and-responsib
 
 ## Constraint-aware static cropping (M1)
 
-**User-visible capability:** For one static source image or shot and several target canvases, return one verified crop per target (or an honest refusal with measured evidence), where required regions are never cut, preferred regions are kept tier by tier when possible, and every soft shortfall is measured. A CI job can run the CLI and fail when a rendition would lose a required region; raster pipelines get a revalidated integer crop; layout code gets a `cover` position. Specified in [architecture §3 and §7](architecture.md#7-algorithms) and [requirements M1-01 to M1-08](requirements.md#m1-functional-requirements-proposed-adr-005).
+**User-visible capability:** For one static source image or shot and several target canvases, return one verified crop per target (or an honest refusal with measured evidence), where required regions are never cut, preferred regions are kept tier by tier when possible, and every soft shortfall is measured. A CI job can run the CLI and fail when a rendition would lose a required region; raster pipelines get a revalidated integer crop; layout code gets a `cover` position. Specified in [architecture §3 and §7](architecture.md#7-algorithms) and [requirements M1-01 to M1-08](requirements.md#m1-functional-requirements-adr-005).
 
 **Worked example (becomes a fixture in S-01/N-01/S-04, [architecture §14](architecture.md#14-initial-usable-implementation-slice)):** source `1920×1080`, required `product`, preferred tier-1 `logo`, targets `story` `1080×1920` and `square` `1080×1080`. `story` drops the logo (visible fraction 0) and crops `x = 996.25..1603.75`; `square` keeps it and crops `x = 840..1920`.
 
@@ -142,7 +143,7 @@ Three internal slices, each ending with `check.sh` green and README status updat
 | 8 | D-01 ([#9](https://github.com/drkarl/framemotive/issues/9)) | `json` feature: versioned request and report documents as separate DTOs, input limits, `deny_unknown_fields`, schema checks, exact `f64` round trip. | S-01, C-01, C-02, S-06 | Round trip, malformed, unknown-field, wrong-version and over-limit documents behave per architecture §8 and §11; `f64` round-trips bit-exactly. | Bit-exact round-trip test; limit tests; canonical report order. | 14–22 |
 | 9 | D-02 (draft) | `framemotive` binary (`cli` feature): `crop`, `check`, `--version`, `--snap`, `--fail-on`, `--output`, text/JSON formats; exit codes 0–3. | D-01 | Built binary run on fixture documents gives specified bytes and exit codes; control characters in IDs are escaped in text output; README command runs. | CLI tests via `CARGO_BIN_EXE_framemotive`. | 10–16 |
 | 10 | Q-04 (draft) | Extend `verify` (invariants 5–7 for kept preferred regions, batch equality) and property tests: determinism, permutation invariance, lower-tier addition, `Outward` snapping. | N-01, S-01, S-06 | Properties pass; failures keep seed and input. | `proptest`. | 8–14 |
-| 11 | Q-05 (draft) | Brute-force oracle on small integer canvases (1/8-pixel origin grid) for invariant 9: no better lexicographic origin exists; empty-interval cases have no feasible grid origin. | N-01 | Oracle shares no code with `crop`; covers M0 margin/focus selection and tiers. | Oracle test run in `check.sh` within a time budget. | 8–14 |
+| 11 | Q-05 (draft) | Brute-force oracle on small integer canvases (1/8-pixel origin grid) for invariant 9: no better lexicographic origin exists; empty-interval cases have no feasible grid origin. | N-01, F-03b | Oracle shares no code with `crop`; covers M0 margin/focus selection and tiers. | Oracle test run in `check.sh` within a time budget. | 8–14 |
 | 12 | Q-06 (draft) | Canonical output and goldens for batch, tier, snapping and JSON report cases (M1-08). | S-06, D-01 | Goldens for the M1 fixtures; bit-identical across reruns; no −0.0. | Golden `to_bits`; JSON byte comparison. | 6–10 |
 | 13 | Q-07 (draft) | Quality gate covers `--no-default-features`, `json`, `cli`; `cargo deny` allow-list and licence review for `serde`, `serde_json`, `clap`. | D-01 (start), D-02 | `check.sh` builds, lints, tests and documents every feature set; default build has no dependencies. | `check.sh`, CI run. | 4–8 |
 | 14 | A-02 (draft) | Documentation: README status, recipes for libvips, sharp, `image` and CSS, and the comparison example (center crop vs union-centred crop vs FrameMotive) with the proportion of differing cases. | Q-04, Q-05, Q-06, Q-07 | README lists only implemented behavior; every example is generated by real code; comparison reported, not used as a gate. | Doctests; example run in tests; rustdoc `-D warnings`. | 8–12 |
@@ -225,7 +226,7 @@ Each issue is deliberately bounded. Dependencies refer to the IDs below; linked 
 | [D-01](https://github.com/drkarl/framemotive/issues/9) / S-01, C-01, C-02, S-06 | M1 | Versioned JSON request and report documents. |
 | D-02 draft / D-01 | M1 | CLI binary and exit codes. |
 | Q-04 draft / N-01, S-01, S-06 | M1 | M1 validator and property tests. |
-| Q-05 draft / N-01 | M1 | Brute-force grid oracle. |
+| Q-05 draft / N-01, F-03b | M1 | Brute-force grid oracle. |
 | Q-06 draft / S-06, D-01 | M1 | M1 golden fixtures. |
 | Q-07 draft / D-01, D-02 | M1 | Feature-matrix gate and dependency review. |
 | A-02 draft / Q-04, Q-05, Q-06, Q-07 | M1 | M1 documentation and comparison example. |

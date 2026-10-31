@@ -1,6 +1,6 @@
 # FrameMotive architecture
 
-**Status:** design only. The M0 contract is accepted (ADR-001 to ADR-004). The initial-scope update in this document and [ADR-005](decisions/ADR-005-initial-scope-static-cropping.md) is **proposed** and awaits review. No crop operation is implemented; the crate exposes no public API yet. Every API, CLI and JSON example below is a proposal.
+**Status:** design only. The M0 contract is accepted (ADR-001 to ADR-004). The initial-scope update in this document and [ADR-005](decisions/ADR-005-initial-scope-static-cropping.md) is **accepted**. No crop operation is implemented; the crate exposes no public API yet. Every API, CLI and JSON example below is a proposal.
 
 Contents:
 

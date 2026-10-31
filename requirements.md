@@ -1,6 +1,6 @@
 # Requirements and measurable outcomes
 
-**Scope vocabulary:** **M0** is the first application-ready software foundation. **M1** completes the initial scope, constraint-aware static cropping ([ADR-005](decisions/ADR-005-initial-scope-static-cropping.md), proposed). **Deferred** items are kept as a record but are not scheduled. Requirements are not promises of current functionality.
+**Scope vocabulary:** **M0** is the first application-ready software foundation. **M1** completes the initial scope, constraint-aware static cropping ([ADR-005](decisions/ADR-005-initial-scope-static-cropping.md), accepted). **Deferred** items are kept as a record but are not scheduled. Requirements are not promises of current functionality.
 
 ## Users and jobs
 
@@ -28,7 +28,7 @@
 
 M0 treats the crop as **full bleed**, with no padding or letterboxing. It accepts only one visual layer and static geometry. A required ROI may be a title or subject region baked into that media. Caller-supplied importance is trusted; there is no detection model. If preserving all required content needs letterboxing, a different composition, or a wider crop, M0 reports infeasible.
 
-## M1 functional requirements (proposed, ADR-005)
+## M1 functional requirements (ADR-005)
 
 M1 keeps the single static, full-bleed source layer and the M0 algorithm. It adds the requirements below. Algorithms are specified in [architecture.md](architecture.md#7-algorithms).
 

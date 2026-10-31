@@ -1,6 +1,6 @@
 # ADR-005: Initial scope is constraint-aware static cropping
 
-- **Status:** proposed
+- **Status:** accepted
 - **Date:** 2026-10-31
 
 ## Context
