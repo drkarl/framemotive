@@ -4,6 +4,7 @@ version = "0.0.0"
 edition = "2024"
 rust-version = "1.94"
 description = "Planned library for constraint-aware static crop decisions; no operations implemented yet."
+license = "MIT OR Apache-2.0"
 publish = false
 
 [dependencies]

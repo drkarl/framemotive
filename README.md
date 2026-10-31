@@ -75,7 +75,7 @@ Non-goals: decoding or rendering media, detecting subjects or saliency, making c
 | Rust crate | Empty library crate with crate-level documentation only; no public API. |
 | Quality gate and CI | Working: rustfmt, clippy `-D warnings`, tests, rustdoc, `cargo deny`. |
 | Crop computation, JSON, CLI | Not implemented. |
-| Releases, licence | No release; no licence selected; not published. |
+| Releases, licence | No release; not published. Dual-licensed under MIT or Apache-2.0 ([License](#license)). |
 
 ## Technical overview
 
@@ -107,3 +107,9 @@ CROSS_CONTAINER_ENGINE=podman RUSTC_WRAPPER= cross test --target aarch64-unknown
 ```
 
 The empty `RUSTC_WRAPPER` disables a host-configured wrapper such as sccache inside the container.
+
+## License
+
+Licensed under either of [Apache License, Version 2.0](LICENSE-APACHE) or [MIT license](LICENSE-MIT) at your option.
+
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in this work by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions.

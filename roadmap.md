@@ -166,7 +166,7 @@ Not gating M1; scheduled after it because a first release needs it. Existing epi
 | Fuzz the JSON-to-outcome path (`cargo-fuzz`, nightly, outside the stable gate); no panic or unbounded allocation on any input | Q-01 | A documented fuzz run of agreed duration finds no crash; corpus kept as fixtures | 8–12 |
 | Benchmark harness with recorded baseline environment; budgets only after measurement | Q-01 | Benchmarks run; baseline recorded in docs; budget set from data | 6–10 |
 | Release platform check: golden fixtures on Linux aarch64 (`cross`), macOS and Windows (`release-platforms`) | Q-02 | All four platforms bit-identical, recorded in the release notes | 4–8 |
-| Packaging: licence selection, crate metadata, MSRV and semver policy, changelog, JSON schema versioning note | Q-02 | `cargo publish --dry-run` clean; compatibility policy documented | 8–14 |
+| Packaging: licence files are in place (MIT OR Apache-2.0); crate metadata, MSRV and semver policy, changelog, JSON schema versioning note | Q-02 | `cargo publish --dry-run` clean; compatibility policy documented | 8–14 |
 | Dependency and licence review, public-fixture review, docs.rs rendering check | Q-02 | Review recorded; no unreviewed transitive native requirement | 3–5 |
 | Publish dry run and release checklist | Q-02 | Checklist executed end to end without publishing, or published on explicit decision | 2–4 |
 
