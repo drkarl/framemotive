@@ -1,6 +1,6 @@
 # Incremental roadmap and proposed issue plan
 
-**Status:** M0 architecture decisions are accepted in ADR-001 through ADR-004. Project repository status is recorded in the [README](README.md). Roadmap work is tracked in [GitHub issues #2–#18](https://github.com/drkarl/framemotive/issues); no release has been made. Implementation is tracked separately. Later milestones are hypotheses to be refined by fixtures and integration experiments.
+**Status:** M0 architecture decisions are accepted in ADR-001 through ADR-004. Project repository status is recorded in the [README](README.md). Roadmap work is tracked in [GitHub issues #2–#18](https://github.com/drkarl/framemotive/issues); no release has been made. Implementation is tracked separately. Later milestones are hypotheses to be refined by fixtures and integration experiments. [ADR-005](decisions/ADR-005-initial-scope-static-cropping.md) (proposed) narrows the initial plan to M0 and M1, constraint-aware static cropping; M2, M3, M4 and the early editor spike are deferred possibilities, kept below as a record. A detailed M1 issue breakdown follows after the architecture update is reviewed.
 
 ## Application-ready foundation (M0)
 
@@ -40,14 +40,14 @@ This is a proposed structure, not a command to create files now. Split modules o
 
 | Milestone | Verifiable result | Gating evidence |
 | --- | --- | --- |
-| Early editor spike | Apply one M0 crop in an editor, save, reopen, inspect and modify its editable operation. | Persisted crop/transform geometry and unsupported fields recorded; result informs the later adapter contract. |
-| M1 — Reliable static crop API | Single source layer only: hard visibility, soft framing preferences with measured violations, stable result schema and a small versioned CLI. | Static fixtures demonstrate priority and tie behavior, useful infeasibility evidence and no silent hard-constraint violation. |
-| M2 — Layered layout | Add independently movable graphics/captions, per-layer target safe areas, layer bounds, collision avoidance and separation with hard/soft placement semantics; choose a solver from representative fixtures. | Two- and three-layer cases, measured violations and conflict IDs, infeasible versus indeterminate status, native dependency/licence review and measured solver behavior. |
-| M3 — Time-varying composition | Validated caller-supplied subject tracks on a rational timebase, cut-aware smoothing, keyframe output and between-sample validation. | Moving-region fixtures include gaps, cuts and uncertain observations; velocity/visibility measurements, temporal error bounds and unverified spans are explicit. |
-| M4 — Editable interchange | Versioned decision document and a maintained editor adapter extending the early spike. | Save/reopen/modify fixtures, unsupported-operation reporting, and separate structural and rendered fidelity results. |
+| Early editor spike — **deferred** | Apply one M0 crop in an editor, save, reopen, inspect and modify its editable operation. | Persisted crop/transform geometry and unsupported fields recorded; result informs the later adapter contract. |
+| M1 — Constraint-aware static cropping | Single source layer only: several targets per request, required and preferred (tiered) regions, measured soft results, infeasibility evidence with binding regions and needed relaxation, versioned JSON report and CLI, opt-in integer snapping and cover-position mapping. | Static fixtures demonstrate tier and tie behavior, useful infeasibility evidence, revalidated snapping and no silent hard-constraint violation. |
+| M2 — Layered layout — **deferred** | Add independently movable graphics/captions, per-layer target safe areas, layer bounds, collision avoidance and separation with hard/soft placement semantics; choose a solver from representative fixtures. | Two- and three-layer cases, measured violations and conflict IDs, infeasible versus indeterminate status, native dependency/licence review and measured solver behavior. |
+| M3 — Time-varying composition — **deferred** | Validated caller-supplied subject tracks on a rational timebase, cut-aware smoothing, keyframe output and between-sample validation. | Moving-region fixtures include gaps, cuts and uncertain observations; velocity/visibility measurements, temporal error bounds and unverified spans are explicit. |
+| M4 — Editable interchange — **deferred** | Versioned decision document and a maintained editor adapter extending the early spike. | Save/reopen/modify fixtures, unsupported-operation reporting, and separate structural and rendered fidelity results. |
 | M5 — Hardening and release | Property/fuzz tests, benchmarks, platform CI, docs/examples, packaging and compatibility policy. | Representative public cases, explicit performance budgets and dependency licence review. |
 
-The early editor spike follows a stable M0 decision and precedes a commitment to M2. It is a feasibility experiment, not a production adapter or an M0 completion requirement. Later milestones may split or reorder as fixtures provide evidence.
+M2, M3, M4 and the early editor spike are deferred possibilities (ADR-005): not scheduled, and none gates M1 or M5. Their rows and issues are kept unchanged as design history; reopening one needs a new decision. M5 hardening can follow M1 directly. The early editor spike was designed to follow a stable M0 decision and precede a commitment to M2; it is a feasibility experiment, not a production adapter or an M0 completion requirement.
 
 ## Issue plan
 
@@ -66,25 +66,25 @@ Each issue is deliberately bounded. Dependencies refer to the IDs below; linked 
 | [Q-01a](https://github.com/drkarl/framemotive/issues/25) / F-03a | Independent geometry validator separate from the solver, plus proptest property tests; extended as F-03b/F-03c land. | Invariants hold over generated finite inputs; failing cases keep seed/input. |
 | [F-05](https://github.com/drkarl/framemotive/issues/26) / F-03b,F-03c,Q-00 | Canonical output (-0.0 normalized, field and diagnostic order) and golden `to_bits` fixtures, IEEE basic operations only. | Fixtures pass per push on Linux x86_64; aarch64 (local `cross`), macOS and Windows (manual workflow) before release. |
 | [F-04](https://github.com/drkarl/framemotive/issues/6) / F-03 | Add runnable synthetic example and accurate README status. | Example executes using real library API; docs distinguish implemented and planned. Golden `to_bits` fixtures pass per push on Linux x86_64. M0 complete; the release additionally needs aarch64, macOS and Windows checks. |
-| [E-01](https://github.com/drkarl/framemotive/issues/7) / F-04 | Prototype one editor save/reopen/modify translation of an M0 crop. | Persisted editable geometry and unsupported or approximated fields measured before M2 design is committed. |
-| [N-01](https://github.com/drkarl/framemotive/issues/8) / F-04 | Define and implement hard/soft crop semantics for one static source layer. | Priority, measured violation, tie and infeasibility fixtures; no independently movable overlay or collision promise. |
-| [S-01](https://github.com/drkarl/framemotive/issues/27) / F-04 | Batch target decisions from one request. | Independent outcomes per target, stable order, request not mutated. |
-| [S-02](https://github.com/drkarl/framemotive/issues/28) / F-04 | Target-space anchors for required regions. | Anchor replaces derived focus; never violates hard constraints or margin. |
-| [S-03](https://github.com/drkarl/framemotive/issues/29) / F-04 | Crop zoom range between a minimum and the maximal crop; design semantics first. | Selection order and infeasibility semantics documented; fixtures. |
-| [S-04](https://github.com/drkarl/framemotive/issues/30) / N-01 | Priority-based dropping of required regions (sub-issue of N-01). | Largest priority-ordered fitting subset reported with region IDs. |
-| [S-05](https://github.com/drkarl/framemotive/issues/31) / F-04 | Static per-shot crop from multiple region samples; T-00 later supersedes the input form. | Crop contains all sample boxes. |
-| [D-01](https://github.com/drkarl/framemotive/issues/9) / F-04 | Define versioned JSON CLI contract for the supported static operation in M1. | Round-trip schema tests, bad-input diagnostics, stable output ordering. |
-| [N-02](https://github.com/drkarl/framemotive/issues/10) / N-01,E-01 | Benchmark Rust Cassowary, `good_lp` backends and, if needed, CP-SAT on representative multi-layer cases. | Same fixture set, status/latency/tie behavior and licence/build comparison; backend recommendation. |
-| [N-03](https://github.com/drkarl/framemotive/issues/11) / N-02 | Implement bounded multi-layer placement and post-solve validation. | Safe-area and overlap fixture tests; hard failures never reported as solved. |
-| [T-00](https://github.com/drkarl/framemotive/issues/12) / F-04 | Specify caller-supplied subject-track metadata and validation. | Track IDs, source space, timebase, gaps, cuts, confidence and observation provenance tested in fixtures. |
-| [T-01](https://github.com/drkarl/framemotive/issues/13) / T-00 | Specify trajectories and cut-aware smoothing constraints. | Movement fixtures and an explicit between-sample validation strategy. |
-| [T-02](https://github.com/drkarl/framemotive/issues/14) / T-01 | Implement temporal crop decisions and editable keyframes. | Cut-aware motion, visibility, between-sample checks and unverified spans tested on moving fixtures. |
-| [E-02](https://github.com/drkarl/framemotive/issues/15) / E-01,D-01 | Define a versioned geometric decision document. | Supported operations round-trip with stable IDs and explicit adapter fidelity semantics. |
-| [E-03](https://github.com/drkarl/framemotive/issues/16) / E-02 | Build and verify the first maintained editor adapter. | Save/reopen/modify tests and supported/approximated/unsupported/unverified reporting. |
+| [E-01](https://github.com/drkarl/framemotive/issues/7) / F-04 | **Deferred.** Prototype one editor save/reopen/modify translation of an M0 crop. | Persisted editable geometry and unsupported or approximated fields measured before M2 design is committed. |
+| [N-01](https://github.com/drkarl/framemotive/issues/8) / F-04 | **M1.** Define and implement hard/soft crop semantics for one static source layer. | Priority, measured violation, tie and infeasibility fixtures; no independently movable overlay or collision promise. |
+| [S-01](https://github.com/drkarl/framemotive/issues/27) / F-04 | **M1.** Batch target decisions from one request. | Independent outcomes per target, stable order, request not mutated. |
+| [S-02](https://github.com/drkarl/framemotive/issues/28) / F-04 | **Deferred.** Target-space anchors for required regions. | Anchor replaces derived focus; never violates hard constraints or margin. |
+| [S-03](https://github.com/drkarl/framemotive/issues/29) / F-04 | **Deferred.** Crop zoom range between a minimum and the maximal crop; design semantics first. | Selection order and infeasibility semantics documented; fixtures. |
+| [S-04](https://github.com/drkarl/framemotive/issues/30) / N-01 | **M1.** Priority-based dropping of required regions (sub-issue of N-01). | Largest priority-ordered fitting subset reported with region IDs. |
+| [S-05](https://github.com/drkarl/framemotive/issues/31) / F-04 | **Deferred.** Static per-shot crop from multiple region samples; T-00 later supersedes the input form. | Crop contains all sample boxes. |
+| [D-01](https://github.com/drkarl/framemotive/issues/9) / F-04 | **M1.** Define versioned JSON CLI contract for the supported static operation in M1. | Round-trip schema tests, bad-input diagnostics, stable output ordering. |
+| [N-02](https://github.com/drkarl/framemotive/issues/10) / N-01,E-01 | **Deferred.** Benchmark Rust Cassowary, `good_lp` backends and, if needed, CP-SAT on representative multi-layer cases. | Same fixture set, status/latency/tie behavior and licence/build comparison; backend recommendation. |
+| [N-03](https://github.com/drkarl/framemotive/issues/11) / N-02 | **Deferred.** Implement bounded multi-layer placement and post-solve validation. | Safe-area and overlap fixture tests; hard failures never reported as solved. |
+| [T-00](https://github.com/drkarl/framemotive/issues/12) / F-04 | **Deferred.** Specify caller-supplied subject-track metadata and validation. | Track IDs, source space, timebase, gaps, cuts, confidence and observation provenance tested in fixtures. |
+| [T-01](https://github.com/drkarl/framemotive/issues/13) / T-00 | **Deferred.** Specify trajectories and cut-aware smoothing constraints. | Movement fixtures and an explicit between-sample validation strategy. |
+| [T-02](https://github.com/drkarl/framemotive/issues/14) / T-01 | **Deferred.** Implement temporal crop decisions and editable keyframes. | Cut-aware motion, visibility, between-sample checks and unverified spans tested on moving fixtures. |
+| [E-02](https://github.com/drkarl/framemotive/issues/15) / E-01,D-01 | **Deferred.** Define a versioned geometric decision document. | Supported operations round-trip with stable IDs and explicit adapter fidelity semantics. |
+| [E-03](https://github.com/drkarl/framemotive/issues/16) / E-02 | **Deferred.** Build and verify the first maintained editor adapter. | Save/reopen/modify tests and supported/approximated/unsupported/unverified reporting. |
 | [Q-01](https://github.com/drkarl/framemotive/issues/17) / F-04 | Add property/fuzz and benchmark harness for geometry. | Invariants hold across generated finite inputs; baseline environment and timing recorded. |
 | [Q-02](https://github.com/drkarl/framemotive/issues/18) / Q-01 | Define platform CI, packaging and release criteria. | Platform checks, dependency review, performance budgets and compatibility policy are documented. |
 
-**Next implementable candidates:** the M0 issues in order: F-01, Q-00, F-02, F-03a, F-03b, F-03c, Q-01a, F-05, F-04, each as a separate task. **Needs design or an experiment:** E-01 onward, N-01 onward, D-01, T-00 onward, and Q-01 onward. The later roadmap remains provisional and requires its own decisions and evidence before implementation.
+**Next implementable candidates:** the M0 issues in order: F-02, F-03a, F-03b, F-03c, Q-01a, F-05, F-04, each as a separate task (F-01 and Q-00 are done: the crate skeleton and CI exist). **M1, after review of ADR-005:** S-01, N-01 with S-04, D-01, plus new issues for infeasibility evidence, integer snapping and cover-position mapping ([architecture §14](architecture.md#14-initial-usable-implementation-slice)). **Deferred, not scheduled:** E-01 to E-03, N-02, N-03, T-00 to T-02, S-02, S-03, S-05. **Hardening:** Q-01, Q-02. Filing or reading an issue does not authorize implementation.
 
 ## Accepted M0 decisions
 
@@ -94,6 +94,10 @@ Each issue is deliberately bounded. Dependencies refer to the IDs below; linked 
 4. The M0 public types and three outcomes are recorded in ADR-003; `Unsupported` and `Indeterminate` remain future outcome names.
 
 The target editor and supported automation surface for the early save/reopen spike are chosen in E-01. Multi-layer solver selection and temporal input remain later decisions.
+
+## Proposed initial-scope decision
+
+[ADR-005](decisions/ADR-005-initial-scope-static-cropping.md) (proposed) makes M0 + M1 the initial plan, adds batch targets, preferred-region tiers, infeasibility evidence, integer snapping and cover mapping to M1, and lists the exact ADR-002, ADR-003 and ADR-004 statements it supersedes.
 
 ## Source index
 

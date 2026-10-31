@@ -3,7 +3,7 @@ name = "framemotive"
 version = "0.0.0"
 edition = "2024"
 rust-version = "1.94"
-description = "Planned library for editable crop and layout adaptation decisions; no operations implemented yet."
+description = "Planned library for constraint-aware static crop decisions; no operations implemented yet."
 publish = false
 
 [dependencies]

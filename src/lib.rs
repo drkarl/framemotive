@@ -1,10 +1,11 @@
-//! FrameMotive will compute editable crop and layout adaptation decisions from
+//! FrameMotive will compute constraint-aware static crop decisions from
 //! caller-supplied geometry.
 //!
-//! Given a source composition and layout constraints, the crate will produce
-//! structured decisions for a target canvas, together with diagnostics when a
-//! constraint cannot be satisfied. It works on geometry and metadata only: it
-//! does not analyse media, render pixels, or edit timelines.
+//! Given a source canvas, the regions that must stay visible and one or more
+//! target canvases, the crate will produce a verified crop decision per target,
+//! or an explicit infeasibility report with measured evidence. It works on
+//! geometry and metadata only: it does not analyse media, render pixels, or
+//! edit timelines.
 //!
 //! # Status
 //!
