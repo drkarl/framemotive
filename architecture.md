@@ -476,7 +476,7 @@ These remain recorded so the design history is not lost. Reopening any of them n
 
 #### Earlier design notes kept for deferred work
 
-The text below is copied verbatim from the M0-era architecture (commit `1920cfa`) so the technical history stays in place. Where it says "M0", "M1", "later" or "next", it uses the milestone plan of that version; ADR-005 supersedes its scheduling statements (the solver benchmark and the early editor spike are deferred, not planned). Section headings are demoted only.
+Wherever these earlier notes conflict with [ADR-005](decisions/ADR-005-initial-scope-static-cropping.md), ADR-005 takes precedence. The text below is copied verbatim from the M0-era architecture (commit `1920cfa`) so the technical history stays in place. Where it says "M0", "M1", "later" or "next", it uses the milestone plan of that version; ADR-005 supersedes its scheduling statements (the solver benchmark and the early editor spike are deferred, not planned). Section headings are demoted only.
 
 ##### Future subject-track input contract
 
